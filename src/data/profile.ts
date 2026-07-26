@@ -274,7 +274,7 @@ export const talks = [
         src: '/talks/wosr22-stand.jpg',
         width: 800,
         height: 1394,
-        alt: 'Tarsha de Souza with two Expedia Group colleagues at the company stand during the conference.',
+        alt: 'Tarsha de Souza featured on Expedia Group’s Instagram during Women of Silicon Roundabout, talking with two colleagues at the company stand.',
       },
     ],
   },
@@ -305,29 +305,22 @@ export const talks = [
 
 /* ── Mentoring ───────────────────────────────────────────────────────────── */
 
+/**
+ * Deliberately brief — a statement, not a catalogue. Everything below the
+ * intro is optional: leave the arrays empty and the section stays to the
+ * point. Fill any of them in later and it grows to fit.
+ */
 export const mentoring = {
-  /** The paragraph that opens the section — your philosophy, briefly. */
-  intro: TODO(
-    'two sentences on how you mentor and what you get out of it — this is the section that makes people trust you with their juniors',
-  ),
-  /**
-   * Programmes, schemes, or ongoing relationships. Keep names anonymous if the
-   * mentee hasn't agreed to be named.
-   */
-  programmes: [
-    {
-      name: TODO('programme or scheme name'),
-      role: TODO('e.g. Mentor'),
-      period: 'TODO: 2023 — Present',
-      description: TODO('what you do there'),
-    },
-  ],
-  /** Numbers, if you have them — these render as animated counters. */
-  stats: [
-    { value: 0, label: 'engineers mentored', suffix: '' },
-    { value: 0, label: 'years mentoring', suffix: '' },
-  ],
-  /** Optional. A quote from someone you've mentored is worth a lot here. */
+  intro:
+    'Pairing, reviews that explain the why, the workshops I teach, and the docs and runbooks that outlast any one conversation.',
+
+  /** Programmes or schemes. Keep mentees anonymous unless they've agreed. */
+  programmes: [] as { name: string; role: string; period: string; description: string }[],
+
+  /** Numbers, if you ever want them — these render as animated counters. */
+  stats: [] as { value: number; label: string; suffix: string }[],
+
+  /** A quote from someone you've mentored would carry real weight here. */
   testimonials: [] as { quote: string; attribution: string }[],
 };
 
