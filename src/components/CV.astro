@@ -1,11 +1,48 @@
 ---
+/**
+ * The CV, as something you read rather than download.
+ *
+ * Two interactions carry it:
+ *  - **Filter by discipline** — one click reframes the whole CV. Someone
+ *    hiring for iOS sees the iOS work; someone hiring for AI sees that. The
+ *    same history, told for the reader in front of it.
+ *  - **Filter by technology** — every bullet carries its own tags, and
+ *    clicking one pulls out every place that technology was actually used.
+ *
+ * A year rail down the left fills as you scroll, so the position in the
+ * timeline is always legible. Filtering is progressive enhancement: with no
+ * JavaScript the whole CV is simply present and readable.
+ */
 import Section from './Section.astro';
 import Stack from './Stack.astro';
 import Todo from './Todo.astro';
 import { experience, education, cvPdf, projects } from '../data/profile';
 import { isTodo, languageColour, allTech } from '../lib/content';
 
-/** One strip of everything you actually work with, derived from the repos. */
+type Highlight = string | { text: string; tags?: string[] };
+
+const asHighlight = (item: Highlight) =>
+  typeof item === 'string' ? { text: item, tags: [] as string[] } : { text: item.text, tags: item.tags ?? [] };
+
+/** Disciplines come from the strands themselves — nothing to keep in sync. */
+const disciplines = experience
+  .flatMap((role) => ('tracks' in role ? (role.tracks ?? []) : []))
+  .map((track) => ({ id: track.id, label: track.label }))
+  .filter((track, i, all) => all.findIndex((t) => t.id === track.id) === i);
+
+/** Year ticks for the rail, newest first. */
+const years = experience
+  .map((role) => role.period.match(/(\d{4})/)?.[1])
+  .filter((year, i, all): year is string => Boolean(year) && all.indexOf(year) === i);
+
+const totalHighlights = experience.reduce(
+  (count, role) =>
+    count +
+    role.highlights.length +
+    ('tracks' in role ? (role.tracks ?? []).reduce((n, t) => n + t.highlights.length, 0) : 0),
+  0,
+);
+
 const tech = allTech([
   ...projects.map((project) => project.stack ?? []),
   ...experience.map((role) => role.stack ?? []),
@@ -16,48 +53,104 @@ const tech = allTech([
   id="cv"
   index="06 / CV"
   title="The short version"
-  note="The long version is a conversation."
+  note="Filter it for what you're hiring for. The long version is a conversation."
 >
-  <div data-stagger="90">
-    {experience.map((role) => (
-      <article class="role" data-reveal>
-        <h3 class="role-company">
-          {isTodo(role.company) ? <Todo value={role.company} /> : role.company}
-        </h3>
-        <p class="role-title">{isTodo(role.role) ? <Todo value={role.role} /> : role.role}</p>
-        <p class="role-when">
-          {isTodo(role.period) ? role.period.replace('TODO: ', '') : role.period}
-          {role.location && !isTodo(role.location) && <span> · {role.location}</span>}
-        </p>
+  <div class="cv" data-cv data-total={totalHighlights}>
+    <div class="cv-controls" data-reveal>
+      <div class="chips" role="group" aria-label="Filter the CV by discipline">
+        <button class="chip is-on" data-filter-all aria-pressed="true">Everything</button>
+        {disciplines.map((discipline) => (
+          <button class="chip" data-filter-track={discipline.id} aria-pressed="false">
+            {discipline.label}
+          </button>
+        ))}
+      </div>
 
-        {role.summary && (
-          <p class="role-summary">
-            {isTodo(role.summary) ? <Todo value={role.summary} /> : role.summary}
-          </p>
-        )}
+      <p class="cv-status" data-cv-status aria-live="polite">
+        Showing all {totalHighlights} highlights
+      </p>
+    </div>
 
-        {role.highlights.length > 0 && (
-          <ul class="role-highlights">
-            {role.highlights.map((highlight) => (
-              <li>{isTodo(highlight) ? <Todo value={highlight} /> : highlight}</li>
-            ))}
-          </ul>
-        )}
+    <div class="cv-body">
+      {/* The rail: year ticks, with a line that fills as the section scrolls. */}
+      <div class="rail" aria-hidden="true">
+        <span class="rail-line"><span class="rail-fill" data-rail-fill></span></span>
+        {years.map((year) => <span class="rail-year">{year}</span>)}
+      </div>
 
-        {/* Grouped strands within a single role — depth and range, separated. */}
-        {'tracks' in role &&
-          role.tracks?.map((track) => (
-            <div class="track">
-              <p class="track-label">{track.label}</p>
-              <ul class="role-highlights">
-                {track.highlights.map((highlight) => (
-                  <li>{isTodo(highlight) ? <Todo value={highlight} /> : highlight}</li>
-                ))}
+      <div class="roles">
+        {experience.map((role) => (
+          <article class="role" data-role>
+            <h3 class="role-company">
+              {isTodo(role.company) ? <Todo value={role.company} /> : role.company}
+            </h3>
+            <p class="role-title">{isTodo(role.role) ? <Todo value={role.role} /> : role.role}</p>
+            <p class="role-when">
+              {isTodo(role.period) ? role.period.replace('TODO: ', '') : role.period}
+              {role.location && !isTodo(role.location) && <span> · {role.location}</span>}
+            </p>
+
+            {role.summary && (
+              <p class="role-summary">
+                {isTodo(role.summary) ? <Todo value={role.summary} /> : role.summary}
+              </p>
+            )}
+
+            {role.highlights.length > 0 && (
+              <ul class="highlights">
+                {role.highlights.map((raw) => {
+                  const item = asHighlight(raw as Highlight);
+                  return (
+                    <li class="highlight" data-highlight data-tags={item.tags.join('|')}>
+                      <p>{isTodo(item.text) ? <Todo value={item.text} /> : item.text}</p>
+                      {item.tags.length > 0 && (
+                        <p class="tags">
+                          {item.tags.map((tag) => (
+                            <button class="tag" data-filter-tag={tag}>{tag}</button>
+                          ))}
+                        </p>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
-            </div>
-          ))}
-      </article>
-    ))}
+            )}
+
+            {'tracks' in role &&
+              role.tracks?.map((track) => (
+                <div class="track" data-track={track.id}>
+                  <p class="track-label">
+                    {track.label}
+                    {'note' in track && track.note && <span class="track-note">{track.note}</span>}
+                  </p>
+
+                  <ul class="highlights">
+                    {track.highlights.map((raw) => {
+                      const item = asHighlight(raw as Highlight);
+                      return (
+                        <li class="highlight" data-highlight data-track={track.id} data-tags={item.tags.join('|')}>
+                          <p>{isTodo(item.text) ? <Todo value={item.text} /> : item.text}</p>
+                          {item.tags.length > 0 && (
+                            <p class="tags">
+                              {item.tags.map((tag) => (
+                                <button class="tag" data-filter-tag={tag}>{tag}</button>
+                              ))}
+                            </p>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
+          </article>
+        ))}
+      </div>
+    </div>
+
+    <p class="cv-empty" data-cv-empty hidden>
+      Nothing in the CV matches that. <button class="link" data-filter-all>Show everything</button>
+    </p>
   </div>
 
   <h3 class="sub" data-reveal>Education</h3>
@@ -73,21 +166,165 @@ const tech = allTech([
 
   <h3 class="sub" data-reveal>What I work with</h3>
   <p class="sub-note" data-reveal>
-    Not a self-assessed skills matrix — this is read from the languages and topics of the code in
-    my repositories.
+    Not a self-assessed skills matrix — the languages and topics here are read from the code in my
+    repositories.
   </p>
   <Stack items={tech} limit={24} />
 
   {cvPdf && (
     <p style="margin-top:2.5rem" data-reveal>
-      <a class="btn btn-primary" href={cvPdf} download>
-        Download CV (PDF) <span class="arrow" aria-hidden="true">↓</span>
+      <a class="btn" href={cvPdf} download>
+        Prefer a PDF? <span class="arrow" aria-hidden="true">↓</span>
       </a>
     </p>
   )}
 </Section>
 
 <style>
+  /* Controls ---------------------------------------------------------------- */
+
+  .cv-controls {
+    position: sticky;
+    top: calc(var(--nav-h) + 0.5rem);
+    z-index: 5;
+    background: color-mix(in oklab, var(--bg) 90%, transparent);
+    backdrop-filter: blur(10px);
+    padding-block: 0.85rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .chip {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid var(--hairline);
+    color: var(--fg-muted);
+    transition: color 0.3s var(--ease-out), border-color 0.3s var(--ease-out),
+      background-color 0.3s var(--ease-out);
+  }
+
+  .chip:hover {
+    color: var(--fg);
+    border-color: var(--hairline-strong);
+  }
+
+  .chip.is-on {
+    color: var(--fg);
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .cv-status {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.06em;
+    color: var(--fg-faint);
+    margin-top: 0.6rem;
+  }
+
+  /* Rail -------------------------------------------------------------------- */
+
+  .cv-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @media (min-width: 48rem) {
+    .cv-body {
+      grid-template-columns: 4.5rem minmax(0, 1fr);
+      gap: 1.5rem;
+    }
+  }
+
+  .rail {
+    display: none;
+    position: relative;
+    padding-top: 0.75rem;
+  }
+
+  @media (min-width: 48rem) {
+    .rail {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+  }
+
+  .rail-line {
+    position: absolute;
+    left: calc(100% - 1px);
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--hairline);
+  }
+
+  .rail-fill {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: calc(var(--progress, 0) * 100%);
+    background: linear-gradient(var(--accent), var(--accent-soft));
+    transition: height 0.15s linear;
+  }
+
+  .rail-year {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--fg-faint);
+    text-align: right;
+    padding-right: 0.9rem;
+    position: relative;
+  }
+
+  .rail-year::after {
+    content: '';
+    position: absolute;
+    right: -3px;
+    top: 0.55em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--fg-faint);
+  }
+
+  /* Roles ------------------------------------------------------------------- */
+
+  .role {
+    padding-bottom: 3rem;
+  }
+
+  .role[hidden] {
+    display: none;
+  }
+
+  .role-company {
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+  }
+
+  .role-title {
+    color: var(--accent-ink);
+    margin-top: 0.2rem;
+  }
+
+  .role-when {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    color: var(--fg-faint);
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+  }
+
   .role-summary {
     color: var(--fg-muted);
     margin-top: 0.85rem;
@@ -95,7 +332,11 @@ const tech = allTech([
   }
 
   .track {
-    margin-top: 1.5rem;
+    margin-top: 1.75rem;
+  }
+
+  .track[hidden] {
+    display: none;
   }
 
   .track-label {
@@ -106,11 +347,97 @@ const tech = allTech([
     color: var(--accent);
     padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--hairline);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: baseline;
   }
 
-  .track .role-highlights {
-    margin-top: 0.85rem;
+  .track-note {
+    color: var(--fg-faint);
+    letter-spacing: 0.06em;
+    text-transform: none;
   }
+
+  /* Highlights -------------------------------------------------------------- */
+
+  .highlights {
+    list-style: none;
+    padding: 0;
+    margin-top: 1rem;
+    display: grid;
+    gap: 1.1rem;
+  }
+
+  .highlight {
+    padding-left: 1.1rem;
+    position: relative;
+    color: var(--fg-muted);
+    transition: opacity 0.3s var(--ease-out), transform 0.3s var(--ease-out);
+  }
+
+  .highlight::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.62em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .highlight[hidden] {
+    display: none;
+  }
+
+  /* Set while filtering, just before the element is hidden. */
+  .highlight.is-out {
+    opacity: 0;
+    transform: translateY(-0.25rem);
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.6rem;
+  }
+
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 5px;
+    border: 1px solid var(--hairline);
+    color: var(--fg-faint);
+    transition: color 0.25s, border-color 0.25s, background-color 0.25s;
+  }
+
+  .tag:hover {
+    color: var(--accent);
+    border-color: var(--accent-soft);
+    background: var(--accent-soft);
+  }
+
+  .tag.is-on {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .cv-empty {
+    color: var(--fg-muted);
+    padding-block: 2rem;
+  }
+
+  .link {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* Tail sections ----------------------------------------------------------- */
 
   .sub {
     font-family: var(--font-mono);

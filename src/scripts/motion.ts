@@ -172,6 +172,171 @@ function initTalkFilter() {
   });
 }
 
+/* ── The interactive CV ──────────────────────────────────────────────────── */
+
+/**
+ * Filter the CV by discipline or by technology, and fill the year rail as the
+ * section scrolls. Everything here is additive: without JavaScript the CV is
+ * simply shown in full, which is the correct fallback for a CV.
+ */
+function initCV() {
+  const cv = document.querySelector<HTMLElement>('[data-cv]');
+  if (!cv) return;
+
+  const chips = cv.querySelectorAll<HTMLButtonElement>('[data-filter-track]');
+  const allButtons = document.querySelectorAll<HTMLButtonElement>('[data-filter-all]');
+  const tags = cv.querySelectorAll<HTMLButtonElement>('[data-filter-tag]');
+  const highlights = Array.from(cv.querySelectorAll<HTMLElement>('[data-highlight]'));
+  const tracks = Array.from(cv.querySelectorAll<HTMLElement>('.track'));
+  const roles = Array.from(cv.querySelectorAll<HTMLElement>('[data-role]'));
+  const status = cv.querySelector<HTMLElement>('[data-cv-status]');
+  const empty = cv.querySelector<HTMLElement>('[data-cv-empty]');
+  const total = Number(cv.dataset.total) || highlights.length;
+
+  /** null = show everything. `label` is what the status line says. */
+  let active: { type: 'track' | 'tag'; value: string; label: string } | null = null;
+
+  const matches = (el: HTMLElement) => {
+    if (!active) return true;
+    if (active.type === 'track') return el.dataset.track === active.value;
+    return (el.dataset.tags ?? '').split('|').includes(active.value);
+  };
+
+  const apply = () => {
+    let shown = 0;
+
+    for (const el of highlights) {
+      const show = matches(el);
+      if (show) shown += 1;
+
+      if (show) {
+        el.hidden = false;
+        // Let the browser see the un-hidden element before animating it back in.
+        requestAnimationFrame(() => el.classList.remove('is-out'));
+      } else {
+        el.classList.add('is-out');
+        window.setTimeout(() => {
+          if (!matches(el)) el.hidden = true;
+        }, reduced ? 0 : 260);
+      }
+    }
+
+    // A container with nothing left to show goes too.
+    const collapse = (containers: HTMLElement[]) => {
+      for (const container of containers) {
+        const any = Array.from(
+          container.querySelectorAll<HTMLElement>('[data-highlight]'),
+        ).some(matches);
+        window.setTimeout(() => {
+          container.hidden = !any;
+        }, any || reduced ? 0 : 260);
+      }
+    };
+
+    collapse(tracks);
+    collapse(roles);
+
+    // Reflect state on the controls.
+    chips.forEach((chip) => {
+      const on = active?.type === 'track' && active.value === chip.dataset.filterTrack;
+      chip.classList.toggle('is-on', on);
+      chip.setAttribute('aria-pressed', String(on));
+    });
+
+    tags.forEach((tag) => {
+      const on = active?.type === 'tag' && active.value === tag.dataset.filterTag;
+      tag.classList.toggle('is-on', on);
+    });
+
+    allButtons.forEach((button) => {
+      button.classList.toggle('is-on', active === null);
+      if (button.hasAttribute('aria-pressed')) {
+        button.setAttribute('aria-pressed', String(active === null));
+      }
+    });
+
+    if (status) {
+      status.textContent = active
+        ? `Showing ${shown} of ${total} highlights · ${active.label}`
+        : `Showing all ${total} highlights`;
+    }
+
+    if (empty) empty.hidden = shown > 0;
+  };
+
+  /**
+   * Filtering removes content, which can leave the reader scrolled past the
+   * whole section looking at a blank page. Pull them back to the top of the CV
+   * whenever that would happen.
+   */
+  const keepInView = () => {
+    const section = document.getElementById('cv');
+    if (!section) return;
+    if (section.getBoundingClientRect().top >= 0) return;
+    section.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+  };
+
+  const toggle = (next: { type: 'track' | 'tag'; value: string; label: string }) => {
+    const same = active?.type === next.type && active.value === next.value;
+    active = same ? null : next;
+    apply();
+    keepInView();
+  };
+
+  chips.forEach((chip) =>
+    chip.addEventListener('click', () =>
+      toggle({
+        type: 'track',
+        value: chip.dataset.filterTrack!,
+        label: chip.textContent?.trim() ?? chip.dataset.filterTrack!,
+      }),
+    ),
+  );
+
+  tags.forEach((tag) =>
+    tag.addEventListener('click', () => {
+      const value = tag.dataset.filterTag!;
+      toggle({ type: 'tag', value, label: value });
+    }),
+  );
+
+  allButtons.forEach((button) =>
+    button.addEventListener('click', () => {
+      active = null;
+      apply();
+      keepInView();
+    }),
+  );
+
+  /* The year rail fills in step with the section's own scroll. */
+  const fill = cv.querySelector<HTMLElement>('[data-rail-fill]');
+  const body = cv.querySelector<HTMLElement>('.cv-body');
+
+  if (fill && body) {
+    let ticking = false;
+
+    const updateRail = () => {
+      ticking = false;
+      const rect = body.getBoundingClientRect();
+      const viewportMiddle = window.innerHeight * 0.5;
+      const progress = (viewportMiddle - rect.top) / rect.height;
+      fill.style.setProperty('--progress', String(Math.min(Math.max(progress, 0), 1)));
+    };
+
+    window.addEventListener(
+      'scroll',
+      () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(updateRail);
+      },
+      { passive: true },
+    );
+
+    updateRail();
+  }
+}
+
 /* ── Theme ───────────────────────────────────────────────────────────────── */
 
 function initTheme() {
@@ -193,4 +358,5 @@ initScrollEffects();
 initCardGlow();
 initCounters();
 initTalkFilter();
+initCV();
 initTheme();

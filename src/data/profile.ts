@@ -145,25 +145,55 @@ export const experience = [
     tracks: [
       {
         label: 'iOS & design systems',
+        /** Used by the discipline filter on the CV. */
+        id: 'ios',
         highlights: [
-          'Cut iOS build times by 24% through modularisation and tooling, after profiling the build graph to find the real bottleneck rather than the obvious one.',
-          'Built server-driven UI authentication flows on GraphQL, so stakeholders ship login-flow changes across 23 brands without waiting for an app release cycle.',
-          'Built the automated maturity-tier promotion system for the next-generation design-system iOS library, and set up its Artifactory release pipeline.',
-          'Created Xray, an internal debugging tool for design-system components. Won a company hackathon with an iOS widget and carried it through to production.',
+          {
+            text: 'Cut iOS build times by 24% through modularisation and tooling, after profiling the build graph to find the real bottleneck rather than the obvious one.',
+            tags: ['Swift', 'iOS', 'Build tooling'],
+          },
+          {
+            text: 'Built server-driven UI authentication flows on GraphQL, so stakeholders ship login-flow changes across 23 brands without waiting for an app release cycle.',
+            tags: ['GraphQL', 'iOS', 'Design Systems'],
+          },
+          {
+            text: 'Built the automated maturity-tier promotion system for the next-generation design-system iOS library, and set up its Artifactory release pipeline.',
+            tags: ['iOS', 'Design Systems', 'CI/CD', 'Artifactory'],
+          },
+          {
+            text: 'Created Xray, an internal debugging tool for design-system components. Won a company hackathon with an iOS widget and carried it through to production.',
+            tags: ['Swift', 'iOS', 'Developer Tooling'],
+          },
         ],
       },
       {
-        label: 'ML engineering — embedded with the marketing ML team, 2026',
+        label: 'ML engineering',
+        id: 'ml',
+        note: 'embedded with the marketing ML team, 2026',
         highlights: [
-          'Refactored the production cost/volume circuit breaker in a churn-prevention PySpark pipeline from hardcoded brand logic to a config-driven market registry — new markets now onboard through a YAML change with zero code changes, verified against production data on Databricks and the live Airflow job.',
-          'Found and fixed silent data-quality bugs: UK traffic skipped by region detection, crashes on legacy tables, and a rerun bug blocking every market. Wrote the architecture docs and onboarding runbook the team uses now.',
+          {
+            text: 'Refactored the production cost/volume circuit breaker in a churn-prevention PySpark pipeline from hardcoded brand logic to a config-driven market registry — new markets now onboard through a YAML change with zero code changes, verified against production data on Databricks and the live Airflow job.',
+            tags: ['Python', 'PySpark', 'Databricks', 'Airflow'],
+          },
+          {
+            text: 'Found and fixed silent data-quality bugs: UK traffic skipped by region detection, crashes on legacy tables, and a rerun bug blocking every market. Wrote the architecture docs and onboarding runbook the team uses now.',
+            tags: ['Python', 'Databricks', 'Data quality'],
+          },
         ],
       },
       {
-        label: 'AI engineering — 2024 to present',
+        label: 'AI engineering',
+        id: 'ai',
+        note: '2024 to present',
         highlights: [
-          'Built multi-agent systems (Claude, Codex) for design-to-code generation from Figma, autonomous debugging and self-healing CI — agent-driven fixes gated by verification loops and human-in-the-loop checkpoints.',
-          'Created reusable Claude Code skills and orchestration agents adopted across the org through an internal skills marketplace.',
+          {
+            text: 'Built multi-agent systems (Claude, Codex) for design-to-code generation from Figma, autonomous debugging and self-healing CI — agent-driven fixes gated by verification loops and human-in-the-loop checkpoints.',
+            tags: ['Claude', 'Codex / OpenAI', 'Multi-agent', 'CI/CD'],
+          },
+          {
+            text: 'Created reusable Claude Code skills and orchestration agents adopted across the org through an internal skills marketplace.',
+            tags: ['Claude', 'Multi-agent', 'Developer Tooling'],
+          },
         ],
       },
     ],
@@ -177,7 +207,10 @@ export const experience = [
     location: '',
     summary: 'Customer-facing features in a large-scale, regulated banking app.',
     highlights: [
-      'Integrated a conversational virtual assistant into the banking app — one of the earliest production deployments of conversational AI in the product.',
+      {
+        text: 'Integrated a conversational virtual assistant into the banking app — one of the earliest production deployments of conversational AI in the product.',
+        tags: ['Conversational AI', 'Mobile'],
+      },
     ],
     stack: [],
   },
