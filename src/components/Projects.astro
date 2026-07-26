@@ -7,6 +7,7 @@
 import Section from './Section.astro';
 import Stack from './Stack.astro';
 import Todo from './Todo.astro';
+import InternalWork from './InternalWork.astro';
 import { projects, projectsIntro } from '../data/profile';
 import { github, isTodo, relativeTime, stackFor } from '../lib/content';
 
@@ -33,9 +34,11 @@ const entries = projects
   id="work"
   index="02 / Work"
   title="Projects"
-  note="Open source. Stars, licence and stack read themselves off the repository."
+  note="Built at work and in the open. Stars, licence and stack read themselves off the repositories."
 >
   <p class="lede" data-reveal>{projectsIntro}</p>
+
+  <InternalWork />
 
   <div class="cards" data-stagger="110">
     {entries.map(({ data, blurb, stack, links }) => (

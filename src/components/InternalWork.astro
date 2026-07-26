@@ -1,0 +1,178 @@
+---
+/**
+ * Case studies for work with no public repository. Video-led, because a tool
+ * like Xray is far easier to show than to describe — and the recordings carry
+ * their own device frame, so they need no mockup around them.
+ *
+ * The markup ships a plain video player with a poster and controls, so it works
+ * with no JavaScript at all. The script then takes over: it strips the controls
+ * and plays each clip only while it's on screen. Deliberately no `autoplay`
+ * attribute — it overrides preload="none" and downloads every clip on page
+ * load. Under prefers-reduced-motion the controls stay and nothing moves.
+ */
+import Stack from './Stack.astro';
+import { internalWork } from '../data/profile';
+import { languageColour } from '../lib/content';
+---
+
+{
+  internalWork.map((project) => (
+    <article class="study" data-reveal>
+      <div class="study-copy">
+        <p class="study-eyebrow">
+          <span class="badge-internal">Internal</span>
+          {project.org} · {project.role}
+        </p>
+        <h3 class="study-name">{project.name}</h3>
+        <p class="study-summary">{project.summary}</p>
+        <p class="study-blurb">{project.blurb}</p>
+
+        <ul class="study-points">
+          {project.points.map((point) => <li>{point}</li>)}
+        </ul>
+
+        <Stack items={project.stack.map((label) => ({ label, colour: languageColour(label) }))} />
+      </div>
+
+      <div class="study-clips">
+        {project.clips.map((clip) => (
+          <figure class="clip">
+            <video
+              poster={clip.poster}
+              width={clip.width}
+              height={clip.height}
+              muted
+              loop
+              playsinline
+              controls
+              preload="none"
+              aria-label={clip.alt}
+              data-clip
+            >
+              {/* H.264 first: it's hardware-decoded on iOS and Safari, which is
+                  most of the audience for an iOS tool. VP9 covers browsers
+                  built without the proprietary codec. */}
+              <source src={clip.src} type="video/mp4" />
+              <source src={clip.src.replace('.mp4', '.webm')} type="video/webm" />
+            </video>
+            <figcaption>{clip.caption}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </article>
+  ))
+}
+
+<style>
+  .study {
+    display: grid;
+    gap: clamp(2rem, 4vw, 3.5rem);
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    background: linear-gradient(
+      150deg,
+      var(--bg-raised),
+      color-mix(in oklab, var(--bg-raised) 55%, var(--bg))
+    );
+    margin-bottom: 1.25rem;
+  }
+
+  @media (min-width: 62rem) {
+    .study {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
+      align-items: start;
+    }
+  }
+
+  .study-eyebrow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+  }
+
+  .badge-internal {
+    color: var(--accent);
+    border: 1px solid var(--accent-soft);
+    background: var(--accent-soft);
+    border-radius: 999px;
+    padding: 0.15rem 0.5rem;
+    letter-spacing: 0.08em;
+  }
+
+  .study-name {
+    font-family: var(--font-display);
+    font-size: var(--step-3);
+    margin-top: 0.75rem;
+  }
+
+  .study-summary {
+    font-size: var(--step-1);
+    color: var(--fg);
+    margin-top: 0.5rem;
+    max-width: 40ch;
+    line-height: 1.4;
+  }
+
+  .study-blurb {
+    color: var(--fg-muted);
+    margin-top: 1rem;
+    max-width: 52ch;
+  }
+
+  .study-points {
+    margin-top: 1.25rem;
+    padding-left: 1.1rem;
+    display: grid;
+    gap: 0.5rem;
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+  }
+
+  .study-points li::marker {
+    color: var(--accent);
+  }
+
+  /* Clips ------------------------------------------------------------------- */
+
+  .study-clips {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  }
+
+  .clip {
+    margin: 0;
+  }
+
+  .clip video {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    background: #000;
+    /* The recordings include their own device bezel — this just lifts them. */
+    box-shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.9);
+  }
+
+  .clip figcaption {
+    margin-top: 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+    color: var(--fg-faint);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .clip video {
+      /* Paused by the script; controls are added so it can still be watched. */
+      outline: 1px solid var(--hairline);
+    }
+  }
+</style>

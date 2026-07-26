@@ -172,6 +172,50 @@ function initTalkFilter() {
   });
 }
 
+/* ── Case-study clips ────────────────────────────────────────────────────── */
+
+/**
+ * Autoplaying video is only acceptable if it's cheap and considerate, so:
+ * clips load only when they're about to be seen, pause when they scroll away,
+ * and never move at all for a visitor who asked for reduced motion — they get
+ * the poster frame and real controls instead.
+ */
+function initClips() {
+  const clips = Array.from(document.querySelectorAll<HTMLVideoElement>('[data-clip]'));
+  if (!clips.length) return;
+
+  // Reduced motion: leave the player exactly as the markup shipped it.
+  if (reduced) return;
+
+  if (!('IntersectionObserver' in window)) {
+    clips.forEach((clip) => {
+      clip.preload = 'metadata';
+    });
+    return;
+  }
+
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const clip = entry.target as HTMLVideoElement;
+        if (entry.isIntersecting) {
+          clip.controls = false;
+          // preload="none" means nothing is fetched until this point.
+          clip.play().catch(() => {
+            // Autoplay refused (a data-saving setting, say) — offer controls.
+            clip.controls = true;
+          });
+        } else {
+          clip.pause();
+        }
+      });
+    },
+    { threshold: 0.25 },
+  );
+
+  clips.forEach((clip) => io.observe(clip));
+}
+
 /* ── Photo lightbox ──────────────────────────────────────────────────────── */
 
 /**
@@ -396,5 +440,6 @@ initCardGlow();
 initCounters();
 initTalkFilter();
 initLightbox();
+initClips();
 initCV();
 initTheme();
