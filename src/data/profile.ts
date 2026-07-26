@@ -71,6 +71,13 @@ export const intro = [
 /* ── Projects ────────────────────────────────────────────────────────────── */
 
 /**
+ * One line above the project cards. Two side projects look like hobbies; the
+ * same idea twice looks like a thesis — so say the thesis out loud.
+ */
+export const projectsIntro =
+  'There’s a pattern in what I build: agents pointed at the work engineering teams put off. The failing build nobody wants to read the logs for. The OS migration that slips until Apple’s deadline makes it urgent.';
+
+/**
  * `repo` pulls the description, stars, languages and last-commit date straight
  * from GitHub at build time — you don't restate any of it here. The tech stack
  * badges are derived from the repo's languages and topics automatically.
