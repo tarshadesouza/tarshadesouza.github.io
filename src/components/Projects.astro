@@ -11,7 +11,20 @@ import { projects } from '../data/profile';
 import { github, isTodo, relativeTime, stackFor } from '../lib/content';
 
 const entries = projects
-  .map((project) => ({ ...project, data: github.repos[project.repo] }))
+  .map((project) => {
+    const data = github.repos[project.repo];
+    return {
+      ...project,
+      data,
+      /** Fall back to the repo's own homepage, so a live URL is never missed. */
+      links:
+        project.links?.length
+          ? project.links
+          : data?.homepage
+            ? [{ label: 'Live', href: data.homepage }]
+            : [],
+    };
+  })
   .filter((project) => project.data)
   .sort((a, b) => Number(b.featured) - Number(a.featured));
 ---

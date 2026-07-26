@@ -92,7 +92,8 @@ export const projects = [
   {
     repo: 'tarshadesouza/AdoptAheadOS',
     featured: true,
-    blurb: TODO('one or two sentences on what AdoptAheadOS is and why you built it'),
+    blurb:
+      'Apple’s deadlines don’t move. Every year brings a hard cut-off for building against the new OS, and adoption work is the first thing a roadmap pushes down — so teams find out they’re behind at the point where it’s already too late. AdoptAheadOS puts an agent on it, doing the bulk of the adoption work early enough that the cut-off stops being an emergency.',
     stack: [],
     links: [],
   },
