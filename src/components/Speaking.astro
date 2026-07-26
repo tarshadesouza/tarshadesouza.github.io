@@ -1,0 +1,101 @@
+---
+/**
+ * Talks, split into public conferences and internal ones — internal talks are
+ * real speaking experience and worth showing, they just need labelling so the
+ * distinction is honest.
+ */
+import Section from './Section.astro';
+import Todo from './Todo.astro';
+import { talks } from '../data/profile';
+import { isTodo, monthYear } from '../lib/content';
+
+const sorted = [...talks].sort((a, b) => (a.date < b.date ? 1 : -1));
+const externalCount = sorted.filter((talk) => talk.scope === 'external').length;
+const internalCount = sorted.length - externalCount;
+---
+
+<Section
+  id="speaking"
+  index="04 / Speaking"
+  title="Talks"
+  note={`${externalCount} external, ${internalCount} internal.`}
+>
+  <div class="scope-tabs" role="tablist" aria-label="Filter talks">
+    <button class="scope-tab" role="tab" data-filter="all" aria-selected="true">All</button>
+    <button class="scope-tab" role="tab" data-filter="external" aria-selected="false">Conferences</button>
+    <button class="scope-tab" role="tab" data-filter="internal" aria-selected="false">Internal</button>
+  </div>
+
+  <div data-stagger="70">
+    {sorted.map((talk) => (
+      <article class="talk" data-scope={talk.scope} data-reveal>
+        <p class="talk-when">
+          {monthYear(talk.date)}
+          <span class="scope-chip" data-scope={talk.scope}>{talk.scope}</span>
+        </p>
+
+        <div>
+          <h3 class="talk-title">
+            {isTodo(talk.title) ? <Todo value={talk.title} /> : talk.title}
+          </h3>
+          <p class="talk-event">
+            {isTodo(talk.event) ? <Todo value={talk.event} /> : talk.event}
+            {!isTodo(talk.location) && <span class="talk-place"> · {talk.location}</span>}
+          </p>
+          <p class="talk-desc">
+            {isTodo(talk.description) ? <Todo value={talk.description} /> : talk.description}
+          </p>
+
+          {(talk.video || talk.slides) && (
+            <p class="talk-links">
+              {talk.video && (
+                <a href={talk.video} target="_blank" rel="noopener">▶ Watch</a>
+              )}
+              {talk.slides && (
+                <a href={talk.slides} target="_blank" rel="noopener">◧ Slides</a>
+              )}
+            </p>
+          )}
+        </div>
+      </article>
+    ))}
+  </div>
+</Section>
+
+<style>
+  .scope-chip {
+    display: block;
+    margin-top: 0.4rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+  }
+
+  .scope-chip[data-scope='external'] {
+    color: var(--accent);
+  }
+
+  .talk-place {
+    color: var(--fg-faint);
+  }
+
+  .talk-links {
+    display: flex;
+    gap: 1.25rem;
+    margin-top: 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .talk-links a {
+    color: var(--fg-muted);
+    transition: color 0.3s var(--ease-out);
+  }
+
+  .talk-links a:hover {
+    color: var(--accent);
+  }
+</style>

@@ -1,0 +1,103 @@
+---
+import '../styles/global.css';
+import { site, social, experience } from '../data/profile';
+import { isTodo } from '../lib/content';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title, description } = Astro.props;
+
+const pageTitle = title ?? `${site.name} — ${site.role}`;
+const pageDescription = description ?? site.description;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? site.url).href;
+const ogImage = new URL('/og.png', Astro.site ?? site.url).href;
+
+const profiles = [
+  `https://github.com/${social.github}`,
+  social.medium && !isTodo(social.medium) ? `https://medium.com/${social.medium}` : null,
+  social.linkedin && !isTodo(social.linkedin)
+    ? `https://www.linkedin.com/in/${social.linkedin}`
+    : null,
+].filter(Boolean);
+
+const currentEmployer = experience.find((role) => !isTodo(role.company))?.company;
+
+/**
+ * Structured data. This is what puts a name, role and links into a search
+ * result rather than a bare blue link — worth more than any meta keyword.
+ */
+const personSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: site.name,
+  url: site.url,
+  jobTitle: site.role,
+  description: pageDescription,
+  sameAs: profiles,
+  ...(currentEmployer ? { worksFor: { '@type': 'Organization', name: currentEmployer } } : {}),
+  knowsAbout: [
+    'Software Engineering',
+    'iOS Development',
+    'Swift',
+    'TypeScript',
+    'Open Source',
+    'Developer Tooling',
+    'Mentoring',
+  ],
+};
+---
+
+<!doctype html>
+<html lang="en" class="no-js" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="author" content={site.name} />
+    <meta name="theme-color" content="#08090c" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#faf8f6" media="(prefers-color-scheme: light)" />
+
+    <meta property="og:type" content="profile" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:site_name" content={site.name} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={pageDescription} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500&display=swap"
+    />
+
+    <script is:inline set:html={JSON.stringify(personSchema)} type="application/ld+json" />
+
+    {/*
+      Set the theme before first paint so there is no flash of the wrong one.
+      Dark is the brand default regardless of the OS setting; light is a
+      deliberate choice the visitor makes with the toggle, and it sticks.
+    */}
+    <script is:inline>
+      document.documentElement.dataset.theme = localStorage.getItem('theme') ?? 'dark';
+    </script>
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <slot />
+    <script>
+      import '../scripts/motion.ts';
+    </script>
+  </body>
+</html>

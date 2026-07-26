@@ -1,0 +1,68 @@
+---
+/**
+ * Live Medium feed. Fetched from your RSS at build time and refreshed daily,
+ * so new posts appear here without a deploy — and without any client-side
+ * fetching, spinners or CORS proxies.
+ */
+import Section from './Section.astro';
+import { social } from '../data/profile';
+import { posts, isTodo, monthYear } from '../lib/content';
+
+const handle = social.medium && !isTodo(social.medium) ? social.medium : null;
+const profileUrl = handle ? `https://medium.com/${handle}` : null;
+---
+
+{
+  handle && (
+    <Section
+      id="writing"
+      index="03 / Writing"
+      title="Latest posts"
+      note="Straight from Medium. Publish there, and it shows up here."
+    >
+      {posts.length > 0 ? (
+        <div data-stagger="80">
+          {posts.map((post) => (
+            <a class="post" href={post.url} target="_blank" rel="noopener" data-reveal>
+              <h3 class="post-title">{post.title}</h3>
+              <p class="post-excerpt">{post.excerpt}</p>
+              <p class="post-meta">
+                <span>{monthYear(post.publishedAt)}</span>
+                <span>{post.readingMinutes} min read</span>
+                {post.tags.slice(0, 3).map((tag) => (
+                  <span>#{tag}</span>
+                ))}
+              </p>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p class="empty" data-reveal>
+          The feed at <code>medium.com/feed/{handle}</code> is empty right now — new posts appear
+          here automatically within a day of publishing.
+        </p>
+      )}
+
+      <p style="margin-top:2rem" data-reveal>
+        <a class="btn" href={profileUrl} target="_blank" rel="me noopener">
+          Read everything on Medium <span class="arrow" aria-hidden="true">↗</span>
+        </a>
+      </p>
+    </Section>
+  )
+}
+
+<style>
+  .empty {
+    color: var(--fg-muted);
+    padding: 2rem 0;
+    border-top: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    color: var(--accent-ink);
+  }
+</style>

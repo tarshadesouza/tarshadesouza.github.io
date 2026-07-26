@@ -1,0 +1,35 @@
+---
+/**
+ * Tech-stack badges. The list comes from the repository itself — languages
+ * GitHub detected and the repo's topics — so the stack shown is the stack that
+ * is actually in the code.
+ */
+interface Props {
+  items: { label: string; colour: string | null }[];
+  limit?: number;
+}
+
+const { items, limit } = Astro.props;
+const shown = limit ? items.slice(0, limit) : items;
+const overflow = limit ? items.length - shown.length : 0;
+---
+
+{
+  shown.length > 0 && (
+    <ul class="stack" data-stagger="45" role="list">
+      {shown.map((item) => (
+        <li>
+          <span class="badge" data-reveal>
+            {item.colour && <span class="swatch" style={`--swatch:${item.colour}`} aria-hidden="true" />}
+            {item.label}
+          </span>
+        </li>
+      ))}
+      {overflow > 0 && (
+        <li>
+          <span class="badge" data-reveal>+{overflow}</span>
+        </li>
+      )}
+    </ul>
+  )
+}

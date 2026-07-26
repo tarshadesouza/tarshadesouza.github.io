@@ -1,0 +1,59 @@
+---
+import { site, social, elsewhere } from '../data/profile';
+import { github, isTodo } from '../lib/content';
+
+const links = [
+  { label: 'GitHub', href: `https://github.com/${social.github}` },
+  social.medium && !isTodo(social.medium)
+    ? { label: 'Medium', href: `https://medium.com/${social.medium}` }
+    : null,
+  social.linkedin && !isTodo(social.linkedin)
+    ? { label: 'LinkedIn', href: `https://www.linkedin.com/in/${social.linkedin}` }
+    : null,
+  social.x ? { label: 'X', href: `https://x.com/${social.x}` } : null,
+  social.bluesky ? { label: 'Bluesky', href: `https://bsky.app/profile/${social.bluesky}` } : null,
+  ...elsewhere,
+].filter(Boolean) as { label: string; href: string }[];
+
+const email = isTodo(social.email) ? null : social.email;
+const synced = github.fetchedAt ? new Date(github.fetchedAt) : null;
+---
+
+<footer class="footer" id="contact">
+  <div class="shell">
+    <p class="footer-cta" data-reveal>
+      Let's build<br /><em>something</em>.
+    </p>
+
+    {email && (
+      <p data-reveal>
+        <a class="btn btn-primary" href={`mailto:${email}`}>
+          {email} <span class="arrow" aria-hidden="true">→</span>
+        </a>
+      </p>
+    )}
+
+    <div class="footer-links" style="margin-top:2.5rem" data-stagger="60">
+      {links.map((link) => (
+        <a class="footer-link" href={link.href} target="_blank" rel="me noopener" data-reveal>
+          {link.label} <span aria-hidden="true">↗</span>
+        </a>
+      ))}
+    </div>
+
+    <div class="footer-fine">
+      <span>© {new Date().getFullYear()} {site.name}</span>
+      <span>
+        Built with Astro · deployed on GitHub Pages
+        {synced && ` · data synced ${synced.toISOString().slice(0, 10)}`}
+      </span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer-cta em {
+    font-style: italic;
+    color: var(--accent);
+  }
+</style>

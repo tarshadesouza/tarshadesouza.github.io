@@ -1,0 +1,66 @@
+---
+import { site, intro, social } from '../data/profile';
+import { isTodo, github } from '../lib/content';
+
+/** Split the name so the surname can carry the accent italic. */
+const [first, ...rest] = site.name.split(' ');
+const surname = rest.join(' ');
+
+const repoCount = Object.keys(github.repos).length;
+---
+
+<header class="hero" id="top">
+  <div class="hero-grid" aria-hidden="true"></div>
+  <div class="hero-glow" aria-hidden="true" data-parallax="0.18"></div>
+
+  <div class="shell">
+    <p class="hero-role" data-reveal>
+      <span>{site.role}</span>
+      {!isTodo(site.location) && <span aria-hidden="true">·</span>}
+      {!isTodo(site.location) && <span>{site.location}</span>}
+      {site.status && <span aria-hidden="true">·</span>}
+      {site.status && <span style="color:var(--accent)">{site.status}</span>}
+    </p>
+
+    <h1 class="hero-name">
+      <span data-reveal style="--reveal-delay:80ms" class="block">{first}</span>
+      <span data-reveal style="--reveal-delay:180ms" class="block"><em>{surname}</em></span>
+    </h1>
+
+    <div class="prose">
+      {intro.map((paragraph, i) => (
+        <p class="hero-lede" data-reveal style={`--reveal-delay:${280 + i * 90}ms`}>
+          {paragraph}
+        </p>
+      ))}
+    </div>
+
+    <div class="hero-actions" data-stagger="80">
+      <a class="btn btn-primary" href="#work" data-reveal>
+        See the work
+        <span class="arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="btn" href={`https://github.com/${social.github}`} data-reveal rel="me noopener" target="_blank">
+        GitHub
+        <span class="arrow" aria-hidden="true">↗</span>
+      </a>
+      {!isTodo(social.linkedin) && (
+        <a class="btn" href={`https://www.linkedin.com/in/${social.linkedin}`} data-reveal rel="me noopener" target="_blank">
+          LinkedIn
+          <span class="arrow" aria-hidden="true">↗</span>
+        </a>
+      )}
+    </div>
+  </div>
+
+  <a class="scroll-cue" href="#now" aria-label="Scroll to what I'm working on">
+    <span>{repoCount} public projects</span>
+    <span class="line" aria-hidden="true"></span>
+  </a>
+</header>
+
+<style>
+  .block {
+    display: block;
+  }
+</style>

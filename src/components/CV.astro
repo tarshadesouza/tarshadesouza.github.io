@@ -1,0 +1,124 @@
+---
+import Section from './Section.astro';
+import Stack from './Stack.astro';
+import Todo from './Todo.astro';
+import { experience, education, cvPdf, projects } from '../data/profile';
+import { isTodo, languageColour, allTech } from '../lib/content';
+
+/** One strip of everything you actually work with, derived from the repos. */
+const tech = allTech([
+  ...projects.map((project) => project.stack ?? []),
+  ...experience.map((role) => role.stack ?? []),
+]).map((label) => ({ label, colour: languageColour(label) }));
+---
+
+<Section
+  id="cv"
+  index="06 / CV"
+  title="The short version"
+  note="The long version is a conversation."
+>
+  <div data-stagger="90">
+    {experience.map((role) => (
+      <article class="role" data-reveal>
+        <h3 class="role-company">
+          {isTodo(role.company) ? <Todo value={role.company} /> : role.company}
+        </h3>
+        <p class="role-title">{isTodo(role.role) ? <Todo value={role.role} /> : role.role}</p>
+        <p class="role-when">
+          {isTodo(role.period) ? role.period.replace('TODO: ', '') : role.period}
+          {!isTodo(role.location) && <span> · {role.location}</span>}
+        </p>
+
+        {role.summary && (
+          <p class="role-summary">
+            {isTodo(role.summary) ? <Todo value={role.summary} /> : role.summary}
+          </p>
+        )}
+
+        {role.highlights.length > 0 && (
+          <ul class="role-highlights">
+            {role.highlights.map((highlight) => (
+              <li>{isTodo(highlight) ? <Todo value={highlight} /> : highlight}</li>
+            ))}
+          </ul>
+        )}
+      </article>
+    ))}
+  </div>
+
+  <h3 class="sub" data-reveal>Education</h3>
+  <div data-stagger="70">
+    {education.map((item) => (
+      <p class="education" data-reveal>
+        <strong>{isTodo(item.qualification) ? <Todo value={item.qualification} /> : item.qualification}</strong>
+        <span>{isTodo(item.institution) ? <Todo value={item.institution} /> : item.institution}</span>
+        <span class="education-when">{item.period.replace('TODO: ', '')}</span>
+      </p>
+    ))}
+  </div>
+
+  <h3 class="sub" data-reveal>What I work with</h3>
+  <p class="sub-note" data-reveal>
+    Not a self-assessed skills matrix — this is read from the languages and topics of the code in
+    my repositories.
+  </p>
+  <Stack items={tech} limit={24} />
+
+  {cvPdf && (
+    <p style="margin-top:2.5rem" data-reveal>
+      <a class="btn btn-primary" href={cvPdf} download>
+        Download CV (PDF) <span class="arrow" aria-hidden="true">↓</span>
+      </a>
+    </p>
+  )}
+</Section>
+
+<style>
+  .role-summary {
+    color: var(--fg-muted);
+    margin-top: 0.85rem;
+    max-width: 58ch;
+  }
+
+  .sub {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 400;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    margin-top: 3.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .sub-note {
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    max-width: 52ch;
+    margin-top: -0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .education {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1rem;
+    align-items: baseline;
+    padding-block: 0.9rem;
+    border-bottom: 1px solid var(--hairline);
+    color: var(--fg-muted);
+  }
+
+  .education strong {
+    color: var(--fg);
+    font-weight: 500;
+  }
+
+  .education-when {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--fg-faint);
+    margin-left: auto;
+  }
+</style>

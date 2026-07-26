@@ -1,0 +1,88 @@
+---
+/**
+ * Projects. Descriptions, stars, licence and last-touched dates come from the
+ * GitHub API at build time; the tech-stack badges are derived from the repo's
+ * own languages and topics. The only hand-written part is why it exists.
+ */
+import Section from './Section.astro';
+import Stack from './Stack.astro';
+import Todo from './Todo.astro';
+import { projects } from '../data/profile';
+import { github, isTodo, relativeTime, stackFor } from '../lib/content';
+
+const entries = projects
+  .map((project) => ({ ...project, data: github.repos[project.repo] }))
+  .filter((project) => project.data)
+  .sort((a, b) => Number(b.featured) - Number(a.featured));
+---
+
+<Section
+  id="work"
+  index="02 / Work"
+  title="Projects"
+  note="Open source. Stars, licence and stack read themselves off the repository."
+>
+  <div class="cards" data-stagger="110">
+    {entries.map(({ data, blurb, stack, links }) => (
+      <article class="card" data-reveal>
+        <div class="card-head">
+          <h3 class="card-title">
+            <a href={data!.url} target="_blank" rel="noopener">{data!.name}</a>
+          </h3>
+          <div class="card-links">
+            {links?.map((link) => (
+              <a href={link.href} target="_blank" rel="noopener" class="card-link">
+                {link.label} <span aria-hidden="true">↗</span>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Your words if you've written them; the repo's description until then. */}
+        {isTodo(blurb) ? (
+          <>
+            {data!.description && <p class="card-blurb">{data!.description}</p>}
+            <p class="card-blurb"><Todo value={blurb} /></p>
+          </>
+        ) : (
+          <p class="card-blurb">{blurb}</p>
+        )}
+
+        <div class="card-meta">
+          {data!.stars > 0 && <span>★ {data!.stars}</span>}
+          {data!.forks > 0 && <span>⑂ {data!.forks}</span>}
+          {data!.license && <span>{data!.license}</span>}
+          <span>updated {relativeTime(data!.pushedAt)}</span>
+        </div>
+
+        <div class="card-stack">
+          <Stack items={stackFor(data, stack)} limit={9} />
+        </div>
+      </article>
+    ))}
+  </div>
+</Section>
+
+<style>
+  .card-links {
+    display: flex;
+    gap: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .card-link {
+    color: var(--fg-faint);
+    transition: color 0.3s var(--ease-out);
+  }
+
+  .card-link:hover {
+    color: var(--accent);
+  }
+
+  .card-stack :global(.stack) {
+    margin-top: 0;
+  }
+</style>

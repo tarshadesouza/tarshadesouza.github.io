@@ -1,0 +1,33 @@
+---
+/**
+ * The spine of the long-scroll layout: a title column that pins itself while
+ * its content scrolls past, exactly like a case-study page. Below 60rem it
+ * degrades to a plain stacked heading.
+ */
+interface Props {
+  id: string;
+  index: string;
+  title: string;
+  note?: string;
+  /** Parallax strength for the pinned title. Negative drifts it upward. */
+  drift?: number;
+}
+
+const { id, index, title, note, drift = -0.06 } = Astro.props;
+---
+
+<section class="section" id={id}>
+  <div class="shell section-grid">
+    <header class="section-head">
+      <div data-parallax={drift}>
+        <p class="section-index">{index}</p>
+        <h2 class="section-title" data-reveal>{title}</h2>
+        {note && <p class="section-note" data-reveal style="--reveal-delay:120ms">{note}</p>}
+      </div>
+    </header>
+
+    <div class="section-body">
+      <slot />
+    </div>
+  </div>
+</section>

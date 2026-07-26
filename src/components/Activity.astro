@@ -1,0 +1,99 @@
+---
+/**
+ * The activity field: what you're working on right now, then a live feed of
+ * real GitHub events. Work that landed in someone else's repository is marked,
+ * because that's the open-source contribution signal people look for.
+ */
+import Section from './Section.astro';
+import Todo from './Todo.astro';
+import { now } from '../data/profile';
+import { github, isTodo, relativeTime } from '../lib/content';
+
+const { activity, contributions } = github;
+const externalCount = activity.filter((item) => item.external).length;
+---
+
+<Section
+  id="now"
+  index="01 / Now"
+  title="What I'm working on"
+  note="Pulled from GitHub when the site builds, and refreshed every day."
+>
+  <div class="now-list" data-stagger="90">
+    {now.map((item) => (
+      <div class="now-item" data-reveal>
+        <span class="now-tag">{item.tag}</span>
+        <p class="now-text">{isTodo(item.text) ? <Todo value={item.text} /> : item.text}</p>
+      </div>
+    ))}
+  </div>
+
+  {contributions && (
+    <div data-reveal>
+      <p class="feed-heading">
+        <strong>{contributions.total.toLocaleString('en-GB')}</strong> contributions in the last year
+      </p>
+      <div class="contrib" role="img" aria-label={`${contributions.total} GitHub contributions in the last year`}>
+        {contributions.days.map((day, i) => (
+          <i style={`--level:${day.level};--d:${Math.min(i * 4, 1200)}ms`} title={`${day.count} on ${day.date}`}></i>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {activity.length > 0 && (
+    <>
+      <p class="feed-heading" data-reveal>
+        Recent activity
+        {externalCount > 0 && <span class="feed-note"> · {externalCount} in other people's repos</span>}
+      </p>
+
+      <div class="feed" data-stagger="55">
+        {activity.map((item) => (
+          <a class="feed-item" data-reveal href={item.repoUrl} target="_blank" rel="noopener">
+            <span class="feed-when">{relativeTime(item.at)}</span>
+            <span class="feed-what">
+              {item.verb} <strong>{item.text}</strong>
+              {item.detail && <span class="feed-detail"> — {item.detail}</span>}
+            </span>
+            <span class="feed-where">
+              {item.external && <span class="feed-ext" title="Contribution to another repository">↗</span>}
+              {item.repo}
+            </span>
+          </a>
+        ))}
+      </div>
+    </>
+  )}
+</Section>
+
+<style>
+  .feed-heading {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .feed-heading strong {
+    color: var(--accent);
+    font-weight: 400;
+    font-size: 0.85rem;
+  }
+
+  .feed-note {
+    color: var(--accent-ink);
+  }
+
+  .feed-detail {
+    color: var(--fg-faint);
+  }
+
+  .feed-ext {
+    color: var(--accent);
+    margin-right: 0.35rem;
+  }
+</style>

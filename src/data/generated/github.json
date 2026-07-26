@@ -1,0 +1,104 @@
+{
+  "fetchedAt": null,
+  "seed": true,
+  "note": "Committed fallback so the site builds offline. Overwritten by `npm run sync` and by every CI build.",
+  "repos": {
+    "tarshadesouza/cyclops": {
+      "name": "cyclops",
+      "full_name": "tarshadesouza/cyclops",
+      "description": "A GitHub App that explains failing CI and fixes it with a coding agent that loops until CI is green — BYOK, configurable per repo.",
+      "url": "https://github.com/tarshadesouza/cyclops",
+      "homepage": "https://tarshadesouza.github.io/cyclops/",
+      "stars": 3,
+      "forks": 0,
+      "openIssues": 0,
+      "pushedAt": "2026-07-20T15:12:57Z",
+      "createdAt": "2026-07-14T08:36:51Z",
+      "license": "MIT",
+      "archived": false,
+      "topics": [
+        "AI Agents",
+        "Autofix",
+        "CI",
+        "Claude",
+        "CI/CD",
+        "Developer Tools",
+        "DevOps",
+        "GitHub App",
+        "TypeScript"
+      ],
+      "languages": [{ "name": "TypeScript" }]
+    },
+    "tarshadesouza/AdoptAheadOS": {
+      "name": "AdoptAheadOS",
+      "full_name": "tarshadesouza/AdoptAheadOS",
+      "description": null,
+      "url": "https://github.com/tarshadesouza/AdoptAheadOS",
+      "homepage": "https://tarshadesouza.github.io/AdoptAheadOS/",
+      "stars": 0,
+      "forks": 0,
+      "openIssues": 0,
+      "pushedAt": "2026-07-26T10:34:47Z",
+      "createdAt": "2026-07-23T08:44:13Z",
+      "license": null,
+      "archived": false,
+      "topics": [],
+      "languages": [{ "name": "HTML" }]
+    },
+    "tarshadesouza/SmartMealPlanner": {
+      "name": "SmartMealPlanner",
+      "full_name": "tarshadesouza/SmartMealPlanner",
+      "description": null,
+      "url": "https://github.com/tarshadesouza/SmartMealPlanner",
+      "homepage": null,
+      "stars": 0,
+      "forks": 0,
+      "openIssues": 0,
+      "pushedAt": "2026-07-23T09:54:38Z",
+      "createdAt": "2023-12-19T11:53:26Z",
+      "license": null,
+      "archived": false,
+      "topics": [],
+      "languages": [{ "name": "Swift" }]
+    }
+  },
+  "activity": [
+    {
+      "verb": "pushed",
+      "text": "1 commit",
+      "detail": "fix(docs): mobile responsiveness for GitHub Pages site",
+      "repo": "tarshadesouza/cyclops",
+      "repoUrl": "https://github.com/tarshadesouza/cyclops",
+      "external": false,
+      "at": "2026-07-20T15:12:01Z"
+    },
+    {
+      "verb": "merged",
+      "text": "#12",
+      "detail": "docs: live demo GIF",
+      "repo": "tarshadesouza/cyclops",
+      "repoUrl": "https://github.com/tarshadesouza/cyclops",
+      "external": false,
+      "at": "2026-07-20T08:54:02Z"
+    },
+    {
+      "verb": "merged",
+      "text": "#10",
+      "detail": "chore: open-source hygiene (license + SECURITY/CONTRIBUTING/CoC)",
+      "repo": "tarshadesouza/cyclops",
+      "repoUrl": "https://github.com/tarshadesouza/cyclops",
+      "external": false,
+      "at": "2026-07-20T07:59:32Z"
+    },
+    {
+      "verb": "merged",
+      "text": "#9",
+      "detail": "docs: dedicated 'Configurable' section",
+      "repo": "tarshadesouza/cyclops",
+      "repoUrl": "https://github.com/tarshadesouza/cyclops",
+      "external": false,
+      "at": "2026-07-18T12:27:09Z"
+    }
+  ],
+  "contributions": null
+}

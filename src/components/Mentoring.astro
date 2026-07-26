@@ -1,0 +1,90 @@
+---
+import Section from './Section.astro';
+import Todo from './Todo.astro';
+import { mentoring } from '../data/profile';
+import { isTodo } from '../lib/content';
+
+const stats = mentoring.stats.filter((stat) => stat.value > 0);
+---
+
+<Section
+  id="mentoring"
+  index="05 / Mentoring"
+  title="Bringing people with me"
+  note="The part of the job that compounds."
+>
+  <p class="lede" data-reveal>
+    {isTodo(mentoring.intro) ? <Todo value={mentoring.intro} /> : mentoring.intro}
+  </p>
+
+  {stats.length > 0 && (
+    <div class="stats" data-stagger="120">
+      {stats.map((stat) => (
+        <div data-reveal>
+          <p class="stat-value">
+            <span data-count={stat.value}>0</span>{stat.suffix}
+          </p>
+          <p class="stat-label">{stat.label}</p>
+        </div>
+      ))}
+    </div>
+  )}
+
+  <div data-stagger="80">
+    {mentoring.programmes.map((programme) => (
+      <article class="programme" data-reveal>
+        <h3 class="programme-name">
+          {isTodo(programme.name) ? <Todo value={programme.name} /> : programme.name}
+        </h3>
+        <p class="programme-meta">
+          {isTodo(programme.role) ? <Todo value={programme.role} /> : programme.role}
+          {!isTodo(programme.period) && <span> · {programme.period}</span>}
+        </p>
+        <p class="programme-desc">
+          {isTodo(programme.description) ? <Todo value={programme.description} /> : programme.description}
+        </p>
+      </article>
+    ))}
+  </div>
+
+  {mentoring.testimonials.map((testimonial) => (
+    <blockquote class="quote" data-reveal>
+      “{testimonial.quote}”
+      <cite>{testimonial.attribution}</cite>
+    </blockquote>
+  ))}
+</Section>
+
+<style>
+  .lede {
+    font-size: var(--step-1);
+    color: var(--fg-muted);
+    max-width: 54ch;
+    line-height: 1.5;
+  }
+
+  .programme {
+    padding-block: 1.5rem;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .programme-name {
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+  }
+
+  .programme-meta {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    margin-top: 0.4rem;
+  }
+
+  .programme-desc {
+    color: var(--fg-muted);
+    margin-top: 0.75rem;
+    max-width: 58ch;
+  }
+</style>
