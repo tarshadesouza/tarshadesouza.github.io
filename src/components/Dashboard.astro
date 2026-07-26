@@ -1,0 +1,395 @@
+---
+/**
+ * The activity dashboard that sits on the first screen.
+ *
+ * Deliberately GitHub-flavoured — contribution squares, event glyphs, state
+ * pills, mono repo names — because that's the visual language an engineer
+ * reading this already knows. Every number is derived from the API data; there
+ * is nothing here to keep up to date by hand.
+ */
+import Timeline from './Timeline.astro';
+import { github, dashboardStats, relativeTime, plural } from '../lib/content';
+
+interface Props {
+  /** How many timeline entries to show. */
+  limit?: number;
+}
+
+const { limit = 5 } = Astro.props;
+
+const stats = dashboardStats();
+const timeline = github.activity.slice(0, limit);
+const projects = github.projects.slice(0, 3);
+const contributions = github.contributions;
+const synced = github.fetchedAt;
+
+/** Only the tiles we actually have numbers for. */
+const tiles = [
+  contributions && { value: contributions.total, label: 'contributions', hint: 'last 12 months' },
+  stats.mergedPRs > 0 && { value: stats.mergedPRs, label: 'PRs merged', hint: 'recently' },
+  { value: stats.publicRepos, label: 'public repos', hint: 'on GitHub' },
+  stats.stars > 0 && { value: stats.stars, label: 'stars', hint: 'across projects' },
+].filter(Boolean) as { value: number; label: string; hint: string }[];
+
+/** Month boundaries for the heatmap's top axis. */
+const months: { label: string; column: number }[] = [];
+contributions?.days.forEach((day, index) => {
+  const date = new Date(day.date);
+  if (date.getDate() <= 7 && index % 7 === 0) {
+    months.push({
+      label: date.toLocaleDateString('en-GB', { month: 'short' }),
+      column: Math.floor(index / 7) + 1,
+    });
+  }
+});
+---
+
+<aside class="dash" data-reveal aria-label="Recent GitHub activity">
+  <header class="dash-head">
+    <span class="dash-live" aria-hidden="true"></span>
+    <span class="dash-title">Activity</span>
+    {synced && (
+      <span class="dash-sync" title={new Date(synced).toUTCString()}>
+        synced {relativeTime(synced)}
+      </span>
+    )}
+  </header>
+
+  {tiles.length > 0 && (
+    <div class="dash-tiles">
+      {tiles.map((tile) => (
+        <div class="tile">
+          <span class="tile-value" data-count={tile.value}>0</span>
+          <span class="tile-label">{tile.label}</span>
+          <span class="tile-hint">{tile.hint}</span>
+        </div>
+      ))}
+    </div>
+  )}
+
+  {contributions && (
+    <div class="dash-block">
+      <div class="heat-months" aria-hidden="true">
+        {months.map((month) => (
+          <span style={`grid-column:${month.column}`}>{month.label}</span>
+        ))}
+      </div>
+      <div
+        class="heat"
+        role="img"
+        aria-label={`${contributions.total} contributions in the last year`}
+      >
+        {contributions.days.map((day, i) => (
+          <i
+            data-level={day.level}
+            style={`--d:${Math.min(i * 3, 900)}ms`}
+            title={`${day.count} contribution${day.count === 1 ? '' : 's'} on ${day.date}`}
+          ></i>
+        ))}
+      </div>
+      <p class="heat-legend" aria-hidden="true">
+        <span>Less</span>
+        <i data-level="0"></i><i data-level="1"></i><i data-level="2"></i><i data-level="3"></i><i data-level="4"></i>
+        <span>More</span>
+      </p>
+    </div>
+  )}
+
+  {projects.length > 0 && (
+    <div class="dash-block">
+      <p class="dash-label">Working on</p>
+      {projects.map((project) => (
+        <a class="project-row" href={project.url} target="_blank" rel="noopener">
+          <span class="project-name">
+            {project.repo.split('/')[1]}
+            {project.external && <span class="ext" title="Someone else's repository">contributed</span>}
+          </span>
+          <span class="project-counts">
+            {project.commits > 0 && <span>{plural(project.commits, 'commit')}</span>}
+            {project.pullRequests > 0 && <span>{plural(project.pullRequests, 'PR')}</span>}
+            {project.issues > 0 && <span>{plural(project.issues, 'issue')}</span>}
+          </span>
+          <span class="project-when">{relativeTime(project.lastAt)}</span>
+        </a>
+      ))}
+    </div>
+  )}
+
+  {timeline.length > 0 && (
+    <div class="dash-block">
+      <p class="dash-label">Timeline</p>
+      <Timeline items={timeline} />
+    </div>
+  )}
+
+  <a class="dash-more" href="#now">
+    Full activity <span aria-hidden="true">↓</span>
+  </a>
+</aside>
+
+<style>
+  .dash {
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    background: color-mix(in oklab, var(--bg-raised) 88%, transparent);
+    backdrop-filter: blur(8px);
+    padding: 1.15rem;
+    font-size: 0.85rem;
+    box-shadow: 0 24px 60px -30px rgba(0, 0, 0, 0.9);
+  }
+
+  /* Header ---------------------------------------------------------------- */
+
+  .dash-head {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .dash-live {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: #3fb950;
+    box-shadow: 0 0 0 0 rgba(63, 185, 80, 0.5);
+    animation: live 2.6s var(--ease-in-out) infinite;
+  }
+
+  @keyframes live {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(63, 185, 80, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 0 0.4rem transparent;
+    }
+  }
+
+  .dash-title {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg);
+  }
+
+  .dash-sync {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--fg-faint);
+  }
+
+  /* Tiles ----------------------------------------------------------------- */
+
+  .dash-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(6.2rem, 1fr));
+    gap: 1px;
+    background: var(--hairline);
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .tile {
+    background: var(--bg-raised);
+    padding: 0.85rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .tile-value {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    line-height: 1;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tile-label {
+    font-size: 0.72rem;
+    color: var(--fg-muted);
+  }
+
+  .tile-hint {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    color: var(--fg-faint);
+  }
+
+  /* Blocks ---------------------------------------------------------------- */
+
+  .dash-block {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .dash-label {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    margin-bottom: 0.75rem;
+  }
+
+  /* Contribution graph ---------------------------------------------------- */
+
+  .heat {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(7, 1fr);
+    gap: 2.5px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .heat::-webkit-scrollbar {
+    display: none;
+  }
+
+  .heat i,
+  .heat-legend i {
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+    background: var(--level-bg);
+    outline: 1px solid color-mix(in oklab, var(--fg) 4%, transparent);
+    outline-offset: -1px;
+  }
+
+  .heat i {
+    opacity: 0;
+    animation: cell 0.45s var(--ease-out) forwards;
+    animation-delay: var(--d, 0ms);
+  }
+
+  @keyframes cell {
+    to {
+      opacity: 1;
+    }
+  }
+
+  [data-level='0'] {
+    --level-bg: color-mix(in oklab, var(--fg) 7%, transparent);
+  }
+  [data-level='1'] {
+    --level-bg: color-mix(in oklab, var(--accent) 28%, transparent);
+  }
+  [data-level='2'] {
+    --level-bg: color-mix(in oklab, var(--accent) 50%, transparent);
+  }
+  [data-level='3'] {
+    --level-bg: color-mix(in oklab, var(--accent) 74%, transparent);
+  }
+  [data-level='4'] {
+    --level-bg: var(--accent);
+  }
+
+  .heat-months {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 11.5px;
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    color: var(--fg-faint);
+    margin-bottom: 0.35rem;
+    height: 0.8rem;
+  }
+
+  .heat-months span {
+    grid-row: 1;
+    white-space: nowrap;
+  }
+
+  .heat-legend {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 3px;
+    margin-top: 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    color: var(--fg-faint);
+  }
+
+  .heat-legend span:first-child {
+    margin-right: 0.25rem;
+  }
+
+  .heat-legend span:last-child {
+    margin-left: 0.25rem;
+  }
+
+  /* Projects -------------------------------------------------------------- */
+
+  .project-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.45rem 0.5rem;
+    margin-inline: -0.5rem;
+    border-radius: 7px;
+    transition: background-color 0.3s var(--ease-out);
+  }
+
+  .project-row:hover {
+    background: color-mix(in oklab, var(--fg) 5%, transparent);
+  }
+
+  .project-name {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    color: var(--fg);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .ext {
+    font-size: 0.56rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--accent-soft);
+    border-radius: 999px;
+    padding: 0.05rem 0.4rem;
+  }
+
+  .project-counts {
+    display: flex;
+    gap: 0.6rem;
+    font-size: 0.68rem;
+    color: var(--fg-muted);
+  }
+
+  .project-when {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--fg-faint);
+    white-space: nowrap;
+  }
+
+  /* Footer ---------------------------------------------------------------- */
+
+  .dash-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    transition: color 0.3s var(--ease-out);
+  }
+
+  .dash-more:hover {
+    color: var(--accent);
+  }
+</style>

@@ -132,9 +132,16 @@ async function fetchRepos() {
 
 /* ── Activity ────────────────────────────────────────────────────────────── */
 
-/** Turn a raw GitHub event into one readable line. */
+/**
+ * Turn a raw GitHub event into a timeline entry.
+ *
+ * `kind` picks the icon and `state` picks the status pill, so the dashboard
+ * reads the way GitHub itself does — merged, open, closed — rather than as a
+ * flat list of sentences.
+ */
 function describeEvent(event) {
   const repo = event.repo.name;
+  const name = repo.split('/')[1];
   const p = event.payload;
 
   switch (event.type) {
@@ -142,34 +149,76 @@ function describeEvent(event) {
       const n = p.distinct_size ?? p.size ?? 0;
       if (!n) return null;
       const subject = p.commits?.at(-1)?.message?.split('\n')[0] ?? '';
+      const branch = p.ref?.replace('refs/heads/', '') ?? null;
       return {
-        verb: 'pushed',
-        text: `${n} commit${n === 1 ? '' : 's'}`,
-        detail: subject.slice(0, 96),
+        kind: 'commit',
+        state: null,
+        verb: `pushed ${n} commit${n === 1 ? '' : 's'}`,
+        title: subject.slice(0, 110),
+        branch,
+        count: n,
+        url: `https://github.com/${repo}/commits/${branch ?? ''}`,
       };
     }
     case 'PullRequestEvent': {
-      if (p.action === 'closed' && p.pull_request?.merged) {
-        return { verb: 'merged', text: `#${p.number}`, detail: p.pull_request.title };
+      const pr = p.pull_request;
+      if (p.action === 'closed') {
+        return {
+          kind: pr?.merged ? 'merge' : 'pr',
+          state: pr?.merged ? 'merged' : 'closed',
+          verb: pr?.merged ? 'merged pull request' : 'closed pull request',
+          title: pr?.title ?? '',
+          number: p.number,
+          url: pr?.html_url ?? null,
+        };
       }
       if (p.action !== 'opened' && p.action !== 'reopened') return null;
-      return { verb: 'opened PR', text: `#${p.number}`, detail: p.pull_request?.title ?? '' };
+      return {
+        kind: 'pr',
+        state: 'open',
+        verb: 'opened pull request',
+        title: pr?.title ?? '',
+        number: p.number,
+        url: pr?.html_url ?? null,
+      };
     }
-    case 'IssuesEvent':
-      if (p.action !== 'opened') return null;
-      return { verb: 'opened issue', text: `#${p.issue.number}`, detail: p.issue.title };
+    case 'IssuesEvent': {
+      if (p.action !== 'opened' && p.action !== 'closed') return null;
+      return {
+        kind: 'issue',
+        state: p.action === 'closed' ? 'closed' : 'open',
+        verb: `${p.action} issue`,
+        title: p.issue.title,
+        number: p.issue.number,
+        url: p.issue.html_url,
+      };
+    }
     case 'PullRequestReviewEvent':
-      return { verb: 'reviewed', text: `#${p.pull_request.number}`, detail: p.pull_request.title };
+      return {
+        kind: 'review',
+        state: null,
+        verb: 'reviewed pull request',
+        title: p.pull_request.title,
+        number: p.pull_request.number,
+        url: p.pull_request.html_url,
+      };
     case 'ReleaseEvent':
       if (p.action !== 'published') return null;
-      return { verb: 'released', text: p.release.tag_name, detail: p.release.name ?? '' };
+      return {
+        kind: 'release',
+        state: 'released',
+        verb: 'published release',
+        title: p.release.name || p.release.tag_name,
+        tag: p.release.tag_name,
+        url: p.release.html_url,
+      };
     case 'CreateEvent':
       if (p.ref_type !== 'repository') return null;
-      return { verb: 'started', text: repo.split('/')[1], detail: '' };
+      return { kind: 'repo', state: 'new', verb: 'created repository', title: name };
     case 'WatchEvent':
       return null; // starring things isn't work
     case 'ForkEvent':
-      return { verb: 'forked', text: repo.split('/')[1], detail: '' };
+      return { kind: 'fork', state: null, verb: 'forked', title: name };
     default:
       return null;
   }
@@ -194,6 +243,7 @@ async function fetchActivity() {
       ...described,
       repo: event.repo.name,
       repoUrl: `https://github.com/${event.repo.name}`,
+      url: described.url ?? `https://github.com/${event.repo.name}`,
       /** True when the work landed in someone else's repo. */
       external: !event.repo.name.startsWith(`${GH_USER}/`),
       at: event.created_at,
@@ -203,6 +253,37 @@ async function fetchActivity() {
   }
 
   return items;
+}
+
+/**
+ * Roll the timeline up per repository — "what am I actually working on right
+ * now", which is the question the dashboard opens with.
+ */
+function summariseProjects(activity) {
+  const byRepo = new Map();
+
+  for (const item of activity) {
+    const entry = byRepo.get(item.repo) ?? {
+      repo: item.repo,
+      url: item.repoUrl,
+      external: item.external,
+      commits: 0,
+      pullRequests: 0,
+      issues: 0,
+      releases: 0,
+      lastAt: item.at,
+    };
+
+    if (item.kind === 'commit') entry.commits += item.count ?? 1;
+    if (item.kind === 'pr' || item.kind === 'merge') entry.pullRequests += 1;
+    if (item.kind === 'issue') entry.issues += 1;
+    if (item.kind === 'release') entry.releases += 1;
+    if (item.at > entry.lastAt) entry.lastAt = item.at;
+
+    byRepo.set(item.repo, entry);
+  }
+
+  return [...byRepo.values()].sort((a, b) => (a.lastAt < b.lastAt ? 1 : -1)).slice(0, 5);
 }
 
 /** The contribution graph needs GraphQL, which needs a token. */
@@ -284,16 +365,36 @@ console.log(`\n  syncing for @${GH_USER}${TOKEN ? '' : '  (no token — rate lim
 
 const github = await persist(
   'github.json',
-  async () => ({
-    fetchedAt: new Date().toISOString(),
-    repos: await fetchRepos(),
-    activity: await fetchActivity(),
-    contributions: await fetchContributions().catch((error) => {
+  async () => {
+    const [account, repos, activity] = await Promise.all([
+      api(`/users/${GH_USER}`).catch(() => null),
+      fetchRepos(),
+      fetchActivity(),
+    ]);
+
+    const contributions = await fetchContributions().catch((error) => {
       console.warn(`  ! contributions: ${error.message}`);
       return null;
-    }),
-  }),
-  { fetchedAt: null, repos: {}, activity: [], contributions: null },
+    });
+
+    return {
+      fetchedAt: new Date().toISOString(),
+      account: account && {
+        login: account.login,
+        name: account.name,
+        avatar: account.avatar_url,
+        bio: account.bio,
+        publicRepos: account.public_repos,
+        followers: account.followers,
+        joined: account.created_at,
+      },
+      repos,
+      activity,
+      projects: summariseProjects(activity),
+      contributions,
+    };
+  },
+  { fetchedAt: null, account: null, repos: {}, activity: [], projects: [], contributions: null },
 );
 
 const medium = await persist('medium.json', fetchMedium, []);

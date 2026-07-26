@@ -1,19 +1,19 @@
 ---
+import Dashboard from './Dashboard.astro';
 import { site, intro, social } from '../data/profile';
-import { isTodo, github } from '../lib/content';
+import { isTodo } from '../lib/content';
 
 /** Split the name so the surname can carry the accent italic. */
 const [first, ...rest] = site.name.split(' ');
 const surname = rest.join(' ');
-
-const repoCount = Object.keys(github.repos).length;
 ---
 
 <header class="hero" id="top">
   <div class="hero-grid" aria-hidden="true"></div>
   <div class="hero-glow" aria-hidden="true" data-parallax="0.18"></div>
 
-  <div class="shell">
+  <div class="shell hero-layout">
+   <div class="hero-intro">
     <p class="hero-role" data-reveal>
       <span>{site.role}</span>
       {!isTodo(site.location) && <span aria-hidden="true">·</span>}
@@ -51,16 +51,50 @@ const repoCount = Object.keys(github.repos).length;
         </a>
       )}
     </div>
-  </div>
+   </div>
 
-  <a class="scroll-cue" href="#now" aria-label="Scroll to what I'm working on">
-    <span>{repoCount} public projects</span>
-    <span class="line" aria-hidden="true"></span>
-  </a>
+   {/* Live GitHub state, on the first screen — the proof behind the words. */}
+   <div class="hero-dash" data-parallax="-0.04">
+     <Dashboard limit={3} />
+   </div>
+  </div>
 </header>
 
 <style>
   .block {
     display: block;
+  }
+
+  .hero-layout {
+    display: grid;
+    gap: clamp(2.5rem, 5vw, 4rem);
+    align-items: center;
+    padding-block: 3rem;
+  }
+
+  /* Two columns only when there's genuinely room for both; below that the
+     dashboard drops underneath the intro at full width. */
+  @media (min-width: 68rem) {
+    .hero-layout {
+      grid-template-columns: minmax(0, 1.02fr) minmax(23rem, 0.98fr);
+      padding-block: 0;
+    }
+  }
+
+  .hero-dash {
+    min-width: 0;
+  }
+
+  /* Sharing the screen with the dashboard, the name steps down a size so both
+     fit above the fold. */
+  @media (min-width: 68rem) {
+    .hero-name {
+      font-size: var(--step-4);
+    }
+
+    .hero-lede {
+      font-size: var(--step-0);
+      max-width: 40ch;
+    }
   }
 </style>

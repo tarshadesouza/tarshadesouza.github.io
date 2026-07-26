@@ -1,15 +1,16 @@
 ---
 /**
- * The activity field: what you're working on right now, then a live feed of
- * real GitHub events. Work that landed in someone else's repository is marked,
- * because that's the open-source contribution signal people look for.
+ * The full activity view. The dashboard on the first screen is the glance;
+ * this is the whole picture — what I've chosen to work on, then every recent
+ * event across every repository, mine or not.
  */
 import Section from './Section.astro';
+import Timeline from './Timeline.astro';
 import Todo from './Todo.astro';
 import { now } from '../data/profile';
-import { github, isTodo, relativeTime } from '../lib/content';
+import { github, isTodo, relativeTime, plural } from '../lib/content';
 
-const { activity, contributions } = github;
+const { activity, projects } = github;
 const externalCount = activity.filter((item) => item.external).length;
 ---
 
@@ -17,7 +18,7 @@ const externalCount = activity.filter((item) => item.external).length;
   id="now"
   index="01 / Now"
   title="What I'm working on"
-  note="Pulled from GitHub when the site builds, and refreshed every day."
+  note="The top half is mine to write. Everything below it reads itself off GitHub, every day."
 >
   <div class="now-list" data-stagger="90">
     {now.map((item) => (
@@ -28,72 +29,114 @@ const externalCount = activity.filter((item) => item.external).length;
     ))}
   </div>
 
-  {contributions && (
-    <div data-reveal>
-      <p class="feed-heading">
-        <strong>{contributions.total.toLocaleString('en-GB')}</strong> contributions in the last year
-      </p>
-      <div class="contrib" role="img" aria-label={`${contributions.total} GitHub contributions in the last year`}>
-        {contributions.days.map((day, i) => (
-          <i style={`--level:${day.level};--d:${Math.min(i * 4, 1200)}ms`} title={`${day.count} on ${day.date}`}></i>
-        ))}
-      </div>
-    </div>
-  )}
-
-  {activity.length > 0 && (
+  {projects.length > 0 && (
     <>
-      <p class="feed-heading" data-reveal>
-        Recent activity
-        {externalCount > 0 && <span class="feed-note"> · {externalCount} in other people's repos</span>}
-      </p>
-
-      <div class="feed" data-stagger="55">
-        {activity.map((item) => (
-          <a class="feed-item" data-reveal href={item.repoUrl} target="_blank" rel="noopener">
-            <span class="feed-when">{relativeTime(item.at)}</span>
-            <span class="feed-what">
-              {item.verb} <strong>{item.text}</strong>
-              {item.detail && <span class="feed-detail"> — {item.detail}</span>}
+      <p class="block-label" data-reveal>Repositories touched recently</p>
+      <div class="repos" data-stagger="70">
+        {projects.map((project) => (
+          <a class="repo" href={project.url} target="_blank" rel="noopener" data-reveal>
+            <span class="repo-name">
+              {project.repo}
+              {project.external && <span class="repo-ext">contribution</span>}
             </span>
-            <span class="feed-where">
-              {item.external && <span class="feed-ext" title="Contribution to another repository">↗</span>}
-              {item.repo}
+            <span class="repo-counts">
+              {project.commits > 0 && <span>{plural(project.commits, 'commit')}</span>}
+              {project.pullRequests > 0 && <span>{plural(project.pullRequests, 'PR')}</span>}
+              {project.issues > 0 && <span>{plural(project.issues, 'issue')}</span>}
+              {project.releases > 0 && <span>{plural(project.releases, 'release')}</span>}
             </span>
+            <span class="repo-when">{relativeTime(project.lastAt)}</span>
           </a>
         ))}
       </div>
     </>
   )}
+
+  {activity.length > 0 && (
+    <>
+      <p class="block-label" data-reveal>
+        Activity
+        {externalCount > 0 && (
+          <span class="block-note"> · {externalCount} in other people's repositories</span>
+        )}
+      </p>
+      <Timeline items={activity} size="roomy" />
+    </>
+  )}
 </Section>
 
 <style>
-  .feed-heading {
+  .block-label {
     font-family: var(--font-mono);
     font-size: 0.72rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--fg-faint);
     margin-top: 3rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
   }
 
-  .feed-heading strong {
-    color: var(--accent);
-    font-weight: 400;
-    font-size: 0.85rem;
-  }
-
-  .feed-note {
+  .block-note {
     color: var(--accent-ink);
   }
 
-  .feed-detail {
-    color: var(--fg-faint);
+  .repos {
+    display: grid;
+    gap: 1px;
+    background: var(--hairline);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 1rem;
   }
 
-  .feed-ext {
+  .repo {
+    background: var(--bg-raised);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 1rem;
+    padding: 0.9rem 1.1rem;
+    transition: background-color 0.35s var(--ease-out);
+  }
+
+  .repo:hover {
+    background: color-mix(in oklab, var(--accent) 7%, var(--bg-raised));
+  }
+
+  .repo-name {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--fg);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .repo-ext {
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
     color: var(--accent);
-    margin-right: 0.35rem;
+    border: 1px solid var(--accent-soft);
+    background: var(--accent-soft);
+    border-radius: 999px;
+    padding: 0.1rem 0.45rem;
+  }
+
+  .repo-counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    font-size: 0.78rem;
+    color: var(--fg-muted);
+  }
+
+  .repo-when {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--fg-faint);
+    white-space: nowrap;
   }
 </style>

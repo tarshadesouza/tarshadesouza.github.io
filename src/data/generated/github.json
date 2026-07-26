@@ -27,7 +27,11 @@
         "GitHub App",
         "TypeScript"
       ],
-      "languages": [{ "name": "TypeScript" }]
+      "languages": [
+        {
+          "name": "TypeScript"
+        }
+      ]
     },
     "tarshadesouza/AdoptAheadOS": {
       "name": "AdoptAheadOS",
@@ -43,7 +47,11 @@
       "license": null,
       "archived": false,
       "topics": [],
-      "languages": [{ "name": "HTML" }]
+      "languages": [
+        {
+          "name": "HTML"
+        }
+      ]
     },
     "tarshadesouza/SmartMealPlanner": {
       "name": "SmartMealPlanner",
@@ -59,46 +67,119 @@
       "license": null,
       "archived": false,
       "topics": [],
-      "languages": [{ "name": "Swift" }]
+      "languages": [
+        {
+          "name": "Swift"
+        }
+      ]
     }
   },
   "activity": [
     {
-      "verb": "pushed",
-      "text": "1 commit",
-      "detail": "fix(docs): mobile responsiveness for GitHub Pages site",
+      "kind": "commit",
+      "state": null,
+      "verb": "pushed 2 commits",
+      "title": "Initial site scaffold",
+      "branch": "main",
+      "count": 2,
+      "repo": "tarshadesouza/AdoptAheadOS",
+      "repoUrl": "https://github.com/tarshadesouza/AdoptAheadOS",
+      "url": "https://github.com/tarshadesouza/AdoptAheadOS/commits/main",
+      "external": false,
+      "at": "2026-07-26T10:34:47Z"
+    },
+    {
+      "kind": "commit",
+      "state": null,
+      "verb": "pushed 1 commit",
+      "title": "fix(docs): mobile responsiveness for GitHub Pages site",
+      "branch": "main",
+      "count": 1,
       "repo": "tarshadesouza/cyclops",
       "repoUrl": "https://github.com/tarshadesouza/cyclops",
+      "url": "https://github.com/tarshadesouza/cyclops/commits/main",
       "external": false,
       "at": "2026-07-20T15:12:01Z"
     },
     {
-      "verb": "merged",
-      "text": "#12",
-      "detail": "docs: live demo GIF",
+      "kind": "merge",
+      "state": "merged",
+      "verb": "merged pull request",
+      "title": "docs: live demo GIF",
+      "number": 12,
       "repo": "tarshadesouza/cyclops",
       "repoUrl": "https://github.com/tarshadesouza/cyclops",
+      "url": "https://github.com/tarshadesouza/cyclops/pull/12",
       "external": false,
       "at": "2026-07-20T08:54:02Z"
     },
     {
-      "verb": "merged",
-      "text": "#10",
-      "detail": "chore: open-source hygiene (license + SECURITY/CONTRIBUTING/CoC)",
+      "kind": "merge",
+      "state": "merged",
+      "verb": "merged pull request",
+      "title": "docs: README demo GIF",
+      "number": 11,
       "repo": "tarshadesouza/cyclops",
       "repoUrl": "https://github.com/tarshadesouza/cyclops",
+      "url": "https://github.com/tarshadesouza/cyclops/pull/11",
+      "external": false,
+      "at": "2026-07-20T08:28:33Z"
+    },
+    {
+      "kind": "merge",
+      "state": "merged",
+      "verb": "merged pull request",
+      "title": "chore: open-source hygiene (license + SECURITY/CONTRIBUTING/CoC)",
+      "number": 10,
+      "repo": "tarshadesouza/cyclops",
+      "repoUrl": "https://github.com/tarshadesouza/cyclops",
+      "url": "https://github.com/tarshadesouza/cyclops/pull/10",
       "external": false,
       "at": "2026-07-20T07:59:32Z"
     },
     {
-      "verb": "merged",
-      "text": "#9",
-      "detail": "docs: dedicated 'Configurable' section",
+      "kind": "merge",
+      "state": "merged",
+      "verb": "merged pull request",
+      "title": "docs: dedicated 'Configurable' section",
+      "number": 9,
       "repo": "tarshadesouza/cyclops",
       "repoUrl": "https://github.com/tarshadesouza/cyclops",
+      "url": "https://github.com/tarshadesouza/cyclops/pull/9",
       "external": false,
       "at": "2026-07-18T12:27:09Z"
     }
   ],
-  "contributions": null
+  "contributions": null,
+  "account": {
+    "login": "tarshadesouza",
+    "name": "Tarsha de Souza",
+    "avatar": "https://avatars.githubusercontent.com/u/33691993?v=4",
+    "bio": "Building Things 🚀",
+    "publicRepos": 17,
+    "followers": 2,
+    "joined": "2017-11-15T13:36:05Z"
+  },
+  "projects": [
+    {
+      "repo": "tarshadesouza/AdoptAheadOS",
+      "url": "https://github.com/tarshadesouza/AdoptAheadOS",
+      "external": false,
+      "commits": 2,
+      "pullRequests": 0,
+      "issues": 0,
+      "releases": 0,
+      "lastAt": "2026-07-26T10:34:47Z"
+    },
+    {
+      "repo": "tarshadesouza/cyclops",
+      "url": "https://github.com/tarshadesouza/cyclops",
+      "external": false,
+      "commits": 1,
+      "pullRequests": 4,
+      "issues": 0,
+      "releases": 0,
+      "lastAt": "2026-07-20T15:12:01Z"
+    }
+  ]
 }

@@ -20,14 +20,56 @@ export interface Repo {
   languages: { name: string; share?: number }[];
 }
 
+export type EventKind =
+  | 'commit'
+  | 'pr'
+  | 'merge'
+  | 'issue'
+  | 'review'
+  | 'release'
+  | 'repo'
+  | 'fork';
+
+export type EventState = 'merged' | 'open' | 'closed' | 'released' | 'new' | null;
+
 export interface ActivityItem {
+  kind: EventKind;
+  state: EventState;
+  /** "merged pull request", "pushed 3 commits" … */
   verb: string;
-  text: string;
-  detail: string;
+  /** The commit subject, PR title or issue title. */
+  title: string;
+  number?: number;
+  branch?: string | null;
+  count?: number;
+  tag?: string;
   repo: string;
   repoUrl: string;
+  url: string;
   external: boolean;
   at: string;
+}
+
+/** One row per repository touched recently, rolled up from the timeline. */
+export interface ProjectActivity {
+  repo: string;
+  url: string;
+  external: boolean;
+  commits: number;
+  pullRequests: number;
+  issues: number;
+  releases: number;
+  lastAt: string;
+}
+
+export interface Account {
+  login: string;
+  name: string | null;
+  avatar: string;
+  bio: string | null;
+  publicRepos: number;
+  followers: number;
+  joined: string;
 }
 
 export interface Post {
@@ -41,13 +83,36 @@ export interface Post {
 
 export const github = githubData as unknown as {
   fetchedAt: string | null;
+  account: Account | null;
   repos: Record<string, Repo>;
   activity: ActivityItem[];
+  projects: ProjectActivity[];
   contributions: {
     total: number;
     days: { date: string; count: number; level: number }[];
   } | null;
 };
+
+/** Totals for the dashboard tiles, all derived — nothing hand-maintained. */
+export function dashboardStats() {
+  const repos = Object.values(github.repos);
+  const merged = github.activity.filter((item) => item.state === 'merged').length;
+  const commits = github.activity
+    .filter((item) => item.kind === 'commit')
+    .reduce((total, item) => total + (item.count ?? 1), 0);
+
+  return {
+    contributions: github.contributions?.total ?? null,
+    stars: repos.reduce((total, repo) => total + repo.stars, 0),
+    publicRepos: github.account?.publicRepos ?? repos.length,
+    mergedPRs: merged,
+    recentCommits: commits,
+    /** Repos touched recently that aren't mine — the open-source signal. */
+    externalRepos: new Set(
+      github.activity.filter((item) => item.external).map((item) => item.repo),
+    ).size,
+  };
+}
 
 export const posts = mediumData as unknown as Post[];
 
@@ -89,6 +154,9 @@ export function relativeTime(iso: string): string {
   }
   return 'just now';
 }
+
+export const plural = (count: number, word: string, suffix = 's') =>
+  `${count} ${word}${count === 1 ? '' : suffix}`;
 
 export function monthYear(value: string): string {
   // Checked directly rather than via isTodo(), whose type guard would narrow
