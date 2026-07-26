@@ -172,6 +172,43 @@ function initTalkFilter() {
   });
 }
 
+/* ── Photo lightbox ──────────────────────────────────────────────────────── */
+
+/**
+ * Uses a native <dialog>, so Escape, focus trapping and the backdrop all come
+ * from the platform rather than from us. Without JavaScript the thumbnails are
+ * still real images with real alt text — they just don't enlarge.
+ */
+function initLightbox() {
+  const dialog = document.querySelector<HTMLDialogElement>('[data-lightbox-dialog]');
+  const image = document.querySelector<HTMLImageElement>('[data-lightbox-image]');
+  if (!dialog || !image) return;
+
+  document.querySelectorAll<HTMLButtonElement>('[data-lightbox]').forEach((trigger) => {
+    trigger.addEventListener('click', () => {
+      const source = trigger.dataset.lightbox!;
+      const thumb = trigger.querySelector('img');
+      image.src = source;
+      image.alt = thumb?.alt ?? '';
+      dialog.showModal();
+    });
+  });
+
+  dialog
+    .querySelector('[data-lightbox-close]')
+    ?.addEventListener('click', () => dialog.close());
+
+  // Clicking the backdrop — anywhere outside the image — closes it too.
+  dialog.addEventListener('click', (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+
+  // Don't hold a full-size image in memory once it's dismissed.
+  dialog.addEventListener('close', () => {
+    image.src = '';
+  });
+}
+
 /* ── The interactive CV ──────────────────────────────────────────────────── */
 
 /**
@@ -358,5 +395,6 @@ initScrollEffects();
 initCardGlow();
 initCounters();
 initTalkFilter();
+initLightbox();
 initCV();
 initTheme();

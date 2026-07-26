@@ -252,6 +252,31 @@ export const talks = [
     link: 'https://www.linkedin.com/posts/tarsha-de-souza-90532b92_learning-wosr22-womenintech-share-7010995713866149888-B-4d/',
     video: null as string | null,
     slides: null as string | null,
+    /**
+     * Photos from the day. Add more by dropping files in public/talks/ and
+     * listing them here; `alt` matters — it's what a screen reader and an
+     * image search both read.
+     */
+    photos: [
+      {
+        src: '/talks/wosr22-speaking.jpg',
+        width: 800,
+        height: 1199,
+        alt: 'Tarsha de Souza speaking into a handheld microphone at Women of Silicon Roundabout 2022, wearing a Speaker badge and an Expedia Group “travel is a force for good” shirt.',
+      },
+      {
+        src: '/talks/wosr22-session.jpg',
+        width: 1280,
+        height: 853,
+        alt: 'The workshop room at Women of Silicon Roundabout, November 2022 — a colleague presenting at the lectern beside a slide of pandemic-era news headlines, with the rest of the Expedia Group team seated alongside.',
+      },
+      {
+        src: '/talks/wosr22-stand.jpg',
+        width: 800,
+        height: 1394,
+        alt: 'Tarsha de Souza with two Expedia Group colleagues at the company stand during the conference.',
+      },
+    ],
   },
   {
     title: 'GraphQL best practices',

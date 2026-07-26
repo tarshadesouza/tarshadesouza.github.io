@@ -35,6 +35,12 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
   </div>
 
   <div data-stagger="70">
+    {/* One dialog serves every photo on the page; the script swaps the source. */}
+    <dialog class="lightbox" data-lightbox-dialog>
+      <button class="lightbox-close" data-lightbox-close aria-label="Close">×</button>
+      <img data-lightbox-image src="" alt="" />
+    </dialog>
+
     {sorted.map((talk) => (
       <article class="talk" data-scope={talk.scope} data-reveal>
         <p class="talk-when">
@@ -60,6 +66,28 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
           <p class="talk-desc">
             {isTodo(talk.description) ? <Todo value={talk.description} /> : talk.description}
           </p>
+
+          {'photos' in talk && talk.photos && talk.photos.length > 0 && (
+            <div class="shots" data-stagger="90">
+              {talk.photos.map((photo) => (
+                <button
+                  class="shot"
+                  data-lightbox={photo.src}
+                  data-reveal
+                  aria-label={`View larger: ${photo.alt}`}
+                >
+                  <img
+                    src={photo.src}
+                    width={photo.width}
+                    height={photo.height}
+                    alt={photo.alt}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
 
           {(talk.video || talk.slides || ('link' in talk && talk.link)) && (
             <p class="talk-links">
@@ -101,6 +129,94 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
   .talk-place {
     color: var(--fg-faint);
+  }
+
+  /* Lightbox ---------------------------------------------------------------- */
+
+  .lightbox {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    max-width: min(92vw, 60rem);
+    max-height: 92vh;
+    overflow: visible;
+  }
+
+  .lightbox::backdrop {
+    background: rgba(4, 5, 8, 0.86);
+    backdrop-filter: blur(6px);
+  }
+
+  .lightbox img {
+    width: 100%;
+    max-height: 88vh;
+    object-fit: contain;
+    border-radius: 12px;
+  }
+
+  .lightbox[open] {
+    animation: pop 0.4s var(--ease-out);
+  }
+
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: -2.5rem;
+    right: 0;
+    font-size: 1.75rem;
+    line-height: 1;
+    color: var(--fg-muted);
+    transition: color 0.3s;
+  }
+
+  .lightbox-close:hover {
+    color: var(--accent);
+  }
+
+  /* Photos ------------------------------------------------------------------ */
+
+  .shots {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+    gap: 0.6rem;
+    margin-top: 1.25rem;
+    max-width: 34rem;
+  }
+
+  .shot {
+    padding: 0;
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+    background: var(--bg-raised);
+    transition: border-color 0.4s var(--ease-out), transform 0.4s var(--ease-out);
+  }
+
+  .shot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Faces sit in the upper half of these frames. */
+    object-position: 50% 30%;
+    transition: transform 0.6s var(--ease-out), filter 0.4s var(--ease-out);
+    filter: saturate(0.92);
+  }
+
+  .shot:hover {
+    border-color: var(--accent-soft);
+    transform: translateY(-2px);
+  }
+
+  .shot:hover img {
+    transform: scale(1.04);
+    filter: saturate(1.05);
   }
 
   .talk-links {
