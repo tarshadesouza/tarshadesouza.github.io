@@ -9,16 +9,24 @@ import Todo from './Todo.astro';
 import { talks } from '../data/profile';
 import { isTodo, monthYear } from '../lib/content';
 
-const sorted = [...talks].sort((a, b) => (a.date < b.date ? 1 : -1));
+/** Newest first, with undated entries kept at the end rather than the top. */
+const sorted = [...talks].sort((a, b) => {
+  const aDated = !isTodo(a.date);
+  const bDated = !isTodo(b.date);
+  if (aDated !== bDated) return aDated ? -1 : 1;
+  return a.date < b.date ? 1 : -1;
+});
+
 const externalCount = sorted.filter((talk) => talk.scope === 'external').length;
 const internalCount = sorted.length - externalCount;
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 ---
 
 <Section
   id="speaking"
   index="04 / Speaking"
   title="Talks"
-  note={`${externalCount} external, ${internalCount} internal.`}
+  note={`${plural(externalCount, "conference talk")}, ${internalCount} internal.`}
 >
   <div class="scope-tabs" role="tablist" aria-label="Filter talks">
     <button class="scope-tab" role="tab" data-filter="all" aria-selected="true">All</button>
@@ -30,8 +38,15 @@ const internalCount = sorted.length - externalCount;
     {sorted.map((talk) => (
       <article class="talk" data-scope={talk.scope} data-reveal>
         <p class="talk-when">
-          {monthYear(talk.date)}
-          <span class="scope-chip" data-scope={talk.scope}>{talk.scope}</span>
+          {isTodo(talk.date) ? <Todo value={talk.date} /> : monthYear(talk.date)}
+          {/* Scope first — conference or internal is the thing a reader wants
+              to know — then the format, when it's worth distinguishing. */}
+          <span class="scope-chip" data-scope={talk.scope}>
+            {talk.scope === 'external' ? 'conference' : 'internal'}
+          </span>
+          {'format' in talk && talk.format === 'workshop' && (
+            <span class="scope-chip format-chip">workshop</span>
+          )}
         </p>
 
         <div>
@@ -46,8 +61,11 @@ const internalCount = sorted.length - externalCount;
             {isTodo(talk.description) ? <Todo value={talk.description} /> : talk.description}
           </p>
 
-          {(talk.video || talk.slides) && (
+          {(talk.video || talk.slides || ('link' in talk && talk.link)) && (
             <p class="talk-links">
+              {'link' in talk && talk.link && (
+                <a href={talk.link} target="_blank" rel="noopener">◆ Write-up</a>
+              )}
               {talk.video && (
                 <a href={talk.video} target="_blank" rel="noopener">▶ Watch</a>
               )}
@@ -74,6 +92,11 @@ const internalCount = sorted.length - externalCount;
 
   .scope-chip[data-scope='external'] {
     color: var(--accent);
+  }
+
+  .format-chip {
+    color: var(--fg-muted);
+    margin-top: 0.2rem;
   }
 
   .talk-place {

@@ -49,7 +49,7 @@ export const social = {
    * in switches on the LinkedIn button in the hero and the "let's build
    * something" footer.
    */
-  linkedin: 'TODO: the slug from linkedin.com/in/…',
+  linkedin: 'tarsha-de-souza-90532b92',
   /** Optional — set to null to hide. */
   x: null as string | null,
   bluesky: null as string | null,
@@ -236,22 +236,32 @@ export const cvPdf: string | null = null; // e.g. '/tarsha-de-souza-cv.pdf'
  */
 export const talks = [
   {
-    title: TODO('talk title'),
-    event: TODO('conference or meetup name'),
+    /**
+     * Details confirmed from public write-ups of the event — check the title
+     * reads the way you'd say it, since the sources describe the session
+     * rather than quote its billing.
+     */
+    title: 'Building the ultimate traveller companion',
+    event: 'Women of Silicon Roundabout',
     scope: 'external' as const,
-    date: 'TODO: 2025-06',
-    location: TODO('city, or “remote”'),
-    description: TODO('one line on what the talk was about'),
+    format: 'workshop' as const,
+    date: '2022-11',
+    location: 'London',
+    description:
+      'A hands-on workshop with four Expedia Group colleagues, walking through the code behind our native mobile apps — the power of mobile development, SwiftUI and server-driven UI — at the UK’s largest tech event for women.',
+    link: 'https://www.linkedin.com/posts/tarsha-de-souza-90532b92_learning-wosr22-womenintech-share-7010995713866149888-B-4d/',
     video: null as string | null,
     slides: null as string | null,
   },
   {
-    title: TODO('internal talk title'),
-    event: TODO('e.g. Expedia Group iOS Guild'),
+    title: 'GraphQL best practices',
+    event: 'Product Academy — Expedia Group',
     scope: 'internal' as const,
-    date: 'TODO: 2024-11',
+    format: 'workshop' as const,
+    date: TODO('YYYY-MM — when you ran it'),
     location: 'Internal',
-    description: TODO('one line'),
+    description:
+      'A hands-on workshop for Expedia Group’s Product Academy, teaching GraphQL best practices.',
     video: null,
     slides: null,
   },
