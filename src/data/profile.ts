@@ -43,7 +43,7 @@ export const social = {
    * Your Medium handle, including the @. The live feed reads
    * medium.com/feed/<handle>. Set to null if you don't want the writing section.
    */
-  medium: '@tarshadesouza',
+  medium: '@Theunanimouscoder',
   linkedin: 'TODO: your-linkedin-slug',
   /** Optional — set to null to hide. */
   x: null as string | null,
