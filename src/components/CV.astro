@@ -27,7 +27,7 @@ const tech = allTech([
         <p class="role-title">{isTodo(role.role) ? <Todo value={role.role} /> : role.role}</p>
         <p class="role-when">
           {isTodo(role.period) ? role.period.replace('TODO: ', '') : role.period}
-          {!isTodo(role.location) && <span> · {role.location}</span>}
+          {role.location && !isTodo(role.location) && <span> · {role.location}</span>}
         </p>
 
         {role.summary && (
@@ -43,6 +43,19 @@ const tech = allTech([
             ))}
           </ul>
         )}
+
+        {/* Grouped strands within a single role — depth and range, separated. */}
+        {'tracks' in role &&
+          role.tracks?.map((track) => (
+            <div class="track">
+              <p class="track-label">{track.label}</p>
+              <ul class="role-highlights">
+                {track.highlights.map((highlight) => (
+                  <li>{isTodo(highlight) ? <Todo value={highlight} /> : highlight}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
       </article>
     ))}
   </div>
@@ -79,6 +92,24 @@ const tech = allTech([
     color: var(--fg-muted);
     margin-top: 0.85rem;
     max-width: 58ch;
+  }
+
+  .track {
+    margin-top: 1.5rem;
+  }
+
+  .track-label {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .track .role-highlights {
+    margin-top: 0.85rem;
   }
 
   .sub {

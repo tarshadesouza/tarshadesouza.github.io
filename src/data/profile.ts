@@ -22,15 +22,15 @@ export const site = {
   url: 'https://tarshadesouza.github.io',
   name: 'Tarsha de Souza',
   /** Shown under your name in the hero, and as the SEO meta description. */
-  role: 'Software Engineer',
-  tagline: 'I build things end to end — mobile, backend, and the tooling in between.',
+  role: 'Senior Software Engineer',
+  tagline: 'iOS at the core, and the range to work across the stack.',
   /**
    * The meta description recruiters and search engines see. Keep it under ~155
    * characters and lead with the words people actually search for.
    */
   description:
-    'Tarsha de Souza — software engineer building across iOS, backend and developer tooling. Open source, writing, conference talks and mentoring.',
-  location: 'TODO: City, Country',
+    'Tarsha de Souza — Senior Software Engineer in Madrid. iOS and design systems at Expedia Group, ML pipelines, multi-agent AI tooling, and open source.',
+  location: 'Madrid, Spain',
   /** Used for the "available for" line in the hero. Set to null to hide it. */
   status: 'Open to interesting problems',
 } as const;
@@ -44,11 +44,16 @@ export const social = {
    * medium.com/feed/<handle>. Set to null if you don't want the writing section.
    */
   medium: '@Theunanimouscoder',
-  linkedin: 'TODO: your-linkedin-slug',
+  /**
+   * Just the slug from linkedin.com/in/<slug> — not the full URL. Filling this
+   * in switches on the LinkedIn button in the hero and the "let's build
+   * something" footer.
+   */
+  linkedin: 'TODO: the slug from linkedin.com/in/…',
   /** Optional — set to null to hide. */
   x: null as string | null,
   bluesky: null as string | null,
-  email: 'TODO: the address you want recruiters to use',
+  email: 'tarshadesouza@hotmail.com',
 };
 
 /* ── The hero paragraph ──────────────────────────────────────────────────── */
@@ -59,7 +64,7 @@ export const social = {
  * badges do that for you automatically).
  */
 export const intro = [
-  'I’m a software engineer who started in iOS and kept going — into backend services, CI infrastructure and the AI tooling that sits alongside them.',
+  'Seven years of production engineering, with iOS at the core — I build the design-system platform that 23 Expedia Group brands ship on. For the last two years I’ve been widening: embedded with a marketing ML team shipping production pipeline changes, and building multi-agent AI tooling.',
   'Right now I’m building CyclOps, an open-source GitHub App that reads failing CI, explains it in plain language, and fixes it with a coding agent that loops until the build is green.',
 ];
 
@@ -78,7 +83,7 @@ export const projects = [
     repo: 'tarshadesouza/cyclops',
     featured: true,
     blurb:
-      'A GitHub App that turns a red build into a green one. It reads the CI logs, explains the failure, and — with one tick in the PR — hands the fix to a coding agent that iterates against your real CI until it passes. Runs on your own API key.',
+      'A GitHub App that turns a red build into a green one. Six specialised detectors classify the failure, AI enriches it with evidence and a confidence score, and — with one tick in the PR — a coding agent fixes it in an isolated sandbox, verified against your real CI rather than a local guess. Permission-gated, and it runs on your own API key.',
     stack: ['PostgreSQL', 'Redis', 'BullMQ', 'Prisma', 'Turborepo', 'Railway'],
     links: [
       { label: 'Live docs', href: 'https://tarshadesouza.github.io/cyclops/' },
@@ -107,9 +112,16 @@ export const projects = [
  * Update it whenever focus shifts — it's the thing that signals you're active.
  */
 export const now = [
-  { text: 'Shipping autofix reliability improvements in CyclOps', tag: 'building' },
-  { text: TODO('an open source project you want to contribute to this year'), tag: 'contributing' },
-  { text: TODO('something you are learning'), tag: 'learning' },
+  { text: 'Building CyclOps — open-source CI failure triage that fixes what it finds', tag: 'building' },
+  {
+    text: 'Embedded with Expedia’s marketing ML team, shipping production pipeline changes in PySpark on Databricks and Airflow',
+    tag: 'shipping',
+  },
+  {
+    text: 'Multi-agent AI tooling and reusable Claude Code skills, adopted across the org through an internal skills marketplace',
+    tag: 'building',
+  },
+  { text: TODO('the open source project you want to contribute to this year'), tag: 'contributing' },
 ];
 
 /* ── CV / experience ─────────────────────────────────────────────────────── */
@@ -121,32 +133,61 @@ export const now = [
 export const experience = [
   {
     company: 'Expedia Group',
-    role: TODO('your exact job title'),
-    period: 'TODO: 2021 — Present',
-    location: 'TODO: City',
-    summary: TODO('one line on what your team owns'),
-    highlights: [
-      TODO('an impact statement with a number in it'),
-      TODO('a second one — scope, scale, or something you led'),
+    role: 'Senior Software Engineer, iOS — Design Systems Platform',
+    period: 'Dec 2020 — Present',
+    location: 'Madrid, Spain',
+    summary:
+      'The design-system platform 23 brands build on — and, over the last two years, two deliberate steps outside it.',
+    /**
+     * Grouped rather than one flat list, because the three strands are the
+     * point: the depth is iOS, the range is everything after it.
+     */
+    tracks: [
+      {
+        label: 'iOS & design systems',
+        highlights: [
+          'Cut iOS build times by 24% through modularisation and tooling, after profiling the build graph to find the real bottleneck rather than the obvious one.',
+          'Built server-driven UI authentication flows on GraphQL, so stakeholders ship login-flow changes across 23 brands without waiting for an app release cycle.',
+          'Built the automated maturity-tier promotion system for the next-generation design-system iOS library, and set up its Artifactory release pipeline.',
+          'Created Xray, an internal debugging tool for design-system components. Won a company hackathon with an iOS widget and carried it through to production.',
+        ],
+      },
+      {
+        label: 'ML engineering — embedded with the marketing ML team, 2026',
+        highlights: [
+          'Refactored the production cost/volume circuit breaker in a churn-prevention PySpark pipeline from hardcoded brand logic to a config-driven market registry — new markets now onboard through a YAML change with zero code changes, verified against production data on Databricks and the live Airflow job.',
+          'Found and fixed silent data-quality bugs: UK traffic skipped by region detection, crashes on legacy tables, and a rerun bug blocking every market. Wrote the architecture docs and onboarding runbook the team uses now.',
+        ],
+      },
+      {
+        label: 'AI engineering — 2024 to present',
+        highlights: [
+          'Built multi-agent systems (Claude, Codex) for design-to-code generation from Figma, autonomous debugging and self-healing CI — agent-driven fixes gated by verification loops and human-in-the-loop checkpoints.',
+          'Created reusable Claude Code skills and orchestration agents adopted across the org through an internal skills marketplace.',
+        ],
+      },
     ],
-    stack: ['Swift', 'SwiftUI', 'iOS'],
+    highlights: [],
+    stack: ['Swift', 'iOS', 'GraphQL', 'Python', 'PySpark', 'Databricks', 'Airflow'],
   },
   {
-    company: TODO('previous company'),
-    role: TODO('title'),
-    period: 'TODO: 2019 — 2021',
-    location: 'TODO: City',
-    summary: TODO('one line'),
-    highlights: [TODO('impact statement')],
+    company: 'Banco Santander',
+    role: 'Software Engineer (via consultancy)',
+    period: '2017 — 2019',
+    location: '',
+    summary: 'Customer-facing features in a large-scale, regulated banking app.',
+    highlights: [
+      'Integrated a conversational virtual assistant into the banking app — one of the earliest production deployments of conversational AI in the product.',
+    ],
     stack: [],
   },
 ];
 
 export const education = [
   {
-    institution: TODO('university or bootcamp'),
-    qualification: TODO('degree'),
-    period: 'TODO: years',
+    institution: 'Cumberland University',
+    qualification: 'Biomedical Science',
+    period: '2014 — 2017',
   },
 ];
 

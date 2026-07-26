@@ -14,12 +14,12 @@ const surname = rest.join(' ');
 
   <div class="shell hero-layout">
    <div class="hero-intro">
+    {/* Separators are drawn by CSS on each item after the first, so a dot can
+        never be left stranded at the end of a wrapped line. */}
     <p class="hero-role" data-reveal>
       <span>{site.role}</span>
-      {!isTodo(site.location) && <span aria-hidden="true">·</span>}
       {!isTodo(site.location) && <span>{site.location}</span>}
-      {site.status && <span aria-hidden="true">·</span>}
-      {site.status && <span style="color:var(--accent)">{site.status}</span>}
+      {site.status && <span class="status">{site.status}</span>}
     </p>
 
     <h1 class="hero-name">
@@ -63,6 +63,16 @@ const surname = rest.join(' ');
 <style>
   .block {
     display: block;
+  }
+
+  .hero-role span + span::before {
+    content: '·';
+    margin-right: 0.75rem;
+    color: var(--fg-faint);
+  }
+
+  .hero-role .status {
+    color: var(--accent);
   }
 
   .hero-layout {
