@@ -99,8 +99,9 @@ export const projects = [
   {
     repo: 'tarshadesouza/SmartMealPlanner',
     featured: false,
-    blurb: TODO('what this one does — or delete this entry'),
-    stack: [],
+    blurb:
+      'An early go at the OpenAI SDK, from back when wiring an LLM into an iOS app meant building the plumbing yourself. A questionnaire on habits and weight goals goes in; a meal plan generated around them comes out.',
+    stack: ['OpenAI API'],
     links: [],
   },
 ];
