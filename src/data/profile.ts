@@ -130,7 +130,10 @@ export const now = [
     text: 'Multi-agent AI tooling and reusable Claude Code skills, adopted across the org through an internal skills marketplace',
     tag: 'building',
   },
-  { text: TODO('the open source project you want to contribute to this year'), tag: 'contributing' },
+  {
+    text: 'Looking for agentic AI projects to contribute to — the tooling layer especially: MCP servers, agent frameworks, and the evaluation harnesses that keep agents honest',
+    tag: 'contributing',
+  },
 ];
 
 /* ── CV / experience ─────────────────────────────────────────────────────── */
