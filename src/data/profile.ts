@@ -297,7 +297,7 @@ export const talks = [
         src: '/talks/product-academy-india.jpg',
         width: 1400,
         height: 1050,
-        alt: 'A packed Product Academy session in India — a speaker at the lectern and two panellists on stage, in front of large screens showing the GraphQL gateway, the Experience API and shared UI components for iOS, Android and web.',
+        alt: 'Tarsha de Souza on stage in a white shirt, taking questions with a fellow panellist at a packed Product Academy session in India, in front of large screens showing the GraphQL gateway, the Experience API and shared UI components for iOS, Android and web.',
       },
     ],
   },
