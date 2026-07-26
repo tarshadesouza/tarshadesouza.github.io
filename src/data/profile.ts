@@ -283,12 +283,23 @@ export const talks = [
     event: 'Product Academy — Expedia Group',
     scope: 'internal' as const,
     format: 'workshop' as const,
-    date: TODO('YYYY-MM — when you ran it'),
+    /** Confirm the year — inferred from your "year of non-stop travel" post. */
+    date: '2023',
     location: 'Internal',
+    /** A travelling series: each city got the workshop in person. */
+    locations: ['India', 'London', 'Chicago', 'Seattle', 'Austin', 'San Francisco'],
     description:
-      'A hands-on workshop for Expedia Group’s Product Academy, teaching GraphQL best practices.',
+      'A travelling workshop on GraphQL best practices for Expedia Group’s Product Academy, taught in person across six offices on three continents — walking engineers and product people through the GraphQL gateway, the Experience API, and the shared UI components behind them.',
     video: null,
     slides: null,
+    photos: [
+      {
+        src: '/talks/product-academy-india.jpg',
+        width: 1400,
+        height: 1050,
+        alt: 'A packed Product Academy session in India — a speaker at the lectern and two panellists on stage, in front of large screens showing the GraphQL gateway, the Experience API and shared UI components for iOS, Android and web.',
+      },
+    ],
   },
 ];
 

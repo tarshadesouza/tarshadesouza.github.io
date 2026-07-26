@@ -20,13 +20,18 @@ const sorted = [...talks].sort((a, b) => {
 const externalCount = sorted.filter((talk) => talk.scope === 'external').length;
 const internalCount = sorted.length - externalCount;
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+/** Every distinct city a talk was given in — the travel is part of the story. */
+const cities = new Set(
+  talks.flatMap((talk) => ('locations' in talk && talk.locations ? talk.locations : [])),
+);
 ---
 
 <Section
   id="speaking"
   index="04 / Speaking"
   title="Talks"
-  note={`${plural(externalCount, "conference talk")}, ${internalCount} internal.`}
+  note={`${plural(externalCount, "conference talk")}, ${internalCount} internal${cities.size > 1 ? `, taught across ${cities.size} cities` : ""}.`}
 >
   <div class="scope-tabs" role="tablist" aria-label="Filter talks">
     <button class="scope-tab" role="tab" data-filter="all" aria-selected="true">All</button>
@@ -61,8 +66,17 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
           </h3>
           <p class="talk-event">
             {isTodo(talk.event) ? <Todo value={talk.event} /> : talk.event}
-            {!isTodo(talk.location) && <span class="talk-place"> · {talk.location}</span>}
+            {!('locations' in talk) && !isTodo(talk.location) && (
+              <span class="talk-place"> · {talk.location}</span>
+            )}
           </p>
+
+          {/* A series that travelled: every city it was taught in. */}
+          {'locations' in talk && talk.locations && (
+            <p class="cities">
+              {talk.locations.map((city) => <span class="city">{city}</span>)}
+            </p>
+          )}
           <p class="talk-desc">
             {isTodo(talk.description) ? <Todo value={talk.description} /> : talk.description}
           </p>
@@ -129,6 +143,24 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
   .talk-place {
     color: var(--fg-faint);
+  }
+
+  .cities {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.7rem;
+  }
+
+  .city {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid var(--hairline);
+    color: var(--fg-muted);
   }
 
   /* Lightbox ---------------------------------------------------------------- */

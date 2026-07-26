@@ -162,6 +162,8 @@ export function monthYear(value: string): string {
   // Checked directly rather than via isTodo(), whose type guard would narrow
   // an already-string argument to `never` in the branch below.
   if (value.startsWith('TODO')) return todoText(value);
+  // A bare year stays a bare year — parsing it would invent a January.
+  if (/^\d{4}$/.test(value)) return value;
   const date = new Date(value.length === 7 ? `${value}-01` : value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
