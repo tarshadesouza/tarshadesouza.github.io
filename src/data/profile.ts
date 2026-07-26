@@ -125,41 +125,28 @@ export const projects = [
  * looping, and fall back to the poster for anyone who's asked for reduced
  * motion.
  */
-export const internalWork = [
-  {
-    name: 'Xray',
-    org: 'Expedia Group',
-    role: 'Creator',
-    summary:
-      'A debugging overlay for design-system components, running inside the real Expedia app.',
-    blurb:
-      'Flip a switch in the app’s debug settings and every component on screen names itself — EGCard, EGTypography, OneKeyLoyaltyBanner — drawn over live production content, not a storybook. Tap one and file a bug, a feature request, an accessibility issue or tech debt against that exact component, or drop it straight into Slack. It turns “something looks off on this screen” into a ticket pointing at the component responsible.',
-    points: [
-      'Component boundaries and names drawn over real screens, live in the app',
-      'Report a bug, feature, a11y issue or tech debt against the component you’re looking at',
-      'A sizing mode that measures any component in place, to the pixel',
-    ],
-    stack: ['Swift', 'iOS', 'Design Systems', 'Developer Tooling'],
-    clips: [
-      {
-        src: '/work/xray-app.mp4',
-        poster: '/work/xray-app-poster.jpg',
-        width: 298,
-        height: 602,
-        caption: 'Turning xRay on in the live app, then filing against a component',
-        alt: 'Screen recording of the Expedia app: opening Debug Settings, enabling Shared-UI and EGDS xRay, then component names and boundaries appear over the real home screen, and a menu offers Bug, Feature, A11Y, TechDebt and Slack.',
-      },
-      {
-        src: '/work/xray-sizing.mp4',
-        poster: '/work/xray-sizing-poster.jpg',
-        width: 640,
-        height: 1286,
-        caption: 'Sizing mode — every component measured in place',
-        alt: 'Screen recording of the component browser with xRay sizing enabled: each component is outlined and labelled with its live width and height in points.',
-      },
-    ],
-  },
-];
+/**
+ * Empty pending sign-off: the Xray case study and its screen recordings were
+ * removed until it's confirmed that internal tooling and pre-release debug
+ * surfaces over production UI are cleared for publication.
+ */
+export const internalWork: {
+  name: string;
+  org: string;
+  role: string;
+  summary: string;
+  blurb: string;
+  points: string[];
+  stack: string[];
+  clips: {
+    src: string;
+    poster: string;
+    width: number;
+    height: number;
+    caption: string;
+    alt: string;
+  }[];
+}[] = [];
 
 /* ── Currently working on ────────────────────────────────────────────────── */
 
