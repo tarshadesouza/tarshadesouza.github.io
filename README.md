@@ -84,10 +84,17 @@ are missing simply drop their section from the report rather than failing the ru
 | `CLOUDFLARE_SITE_TAG` | *Optional.* Found automatically by matching the beacon token in `profile.ts` against the sites on your account — only set it to override that. |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | Google Cloud → service account → JSON key, pasted whole. Add the service account's email as a user in Search Console. |
 | `RESEND_API_KEY` | resend.com → API Keys |
-| `REPORT_TO` | the address to send to |
+| `REPORT_TO` | *Optional.* Defaults to the email in `profile.ts`. |
 
-`REPORT_FROM` is optional and defaults to Resend's shared sender, which can only send to
-your own Resend account address. Verify a domain with Resend to send from your own.
+`REPORT_FROM` is optional and defaults to `onboarding@resend.dev`, Resend's shared sender.
+**That sender can only deliver to the email address on your own Resend account** — sending
+anywhere else fails with *"You can only send testing emails to your own email address"*.
+To send to any other address, verify a domain at resend.com/domains and set `REPORT_FROM`
+to an address on it.
+
+Note that an unset secret arrives as an empty string rather than as an absent variable, so
+every one of these is read through a helper that treats blank as unset — otherwise the
+defaults above would never apply.
 
 Test the whole thing without waiting for Monday: **Actions → Weekly report → Run workflow**,
 with *dry run* ticked to print the report into the log instead of emailing it.

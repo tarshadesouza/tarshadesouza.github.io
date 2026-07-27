@@ -66,7 +66,6 @@ const CLOUDFLARE_ACCOUNT_ID = env('CLOUDFLARE_ACCOUNT_ID');
 const CLOUDFLARE_SITE_TAG = env('CLOUDFLARE_SITE_TAG');
 const GOOGLE_SERVICE_ACCOUNT_JSON = env('GOOGLE_SERVICE_ACCOUNT_JSON');
 const RESEND_API_KEY = env('RESEND_API_KEY');
-const REPORT_TO = env('REPORT_TO');
 const REPORT_FROM = env('REPORT_FROM', 'onboarding@resend.dev');
 
 /* Site URL comes from the same profile.ts that drives the site. */
@@ -74,6 +73,12 @@ const profileSource = await readFile(resolve(ROOT, 'src/data/profile.ts'), 'utf8
 const SITE_URL = profileSource.match(/url:\s*'([^']+)'/)?.[1] ?? 'https://tarshadesouza.github.io';
 /** The beacon token already in the site's HTML — used to find the site tag. */
 const BEACON_TOKEN = profileSource.match(/id:\s*'([0-9a-f]{32})'/)?.[1] ?? null;
+/**
+ * Where to send it. Falls back to the address already in profile.ts, which is
+ * one fewer secret to keep in sync — and, on the shared Resend sender, the
+ * address it is most likely allowed to deliver to anyway.
+ */
+const REPORT_TO = env('REPORT_TO', profileSource.match(/email:\s*'([^']+)'/)?.[1]);
 
 /* ── Dates ───────────────────────────────────────────────────────────────── */
 
