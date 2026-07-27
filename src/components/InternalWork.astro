@@ -35,7 +35,26 @@ import { languageColour } from '../lib/content';
       </div>
 
       <div class="study-clips">
-        {project.clips.map((clip) => (
+        {(project.shots ?? []).map((shot) => (
+          <figure class="clip">
+            {/* WebP with the PNG beside it as fallback. The <img> carries the
+                dimensions so the layout never jumps while it loads. */}
+            <picture>
+              <source srcset={shot.src} type="image/webp" />
+              <img
+                src={shot.src.replace('.webp', '.png')}
+                width={shot.width}
+                height={shot.height}
+                alt={shot.alt}
+                loading="lazy"
+                decoding="async"
+              />
+            </picture>
+            <figcaption>{shot.caption}</figcaption>
+          </figure>
+        ))}
+
+        {(project.clips ?? []).map((clip) => (
           <figure class="clip">
             <video
               poster={clip.poster}
@@ -151,13 +170,20 @@ import { languageColour } from '../lib/content';
     margin: 0;
   }
 
-  .clip video {
+  .clip video,
+  .clip img {
     width: 100%;
     height: auto;
     border-radius: 10px;
     background: #000;
     /* The recordings include their own device bezel — this just lifts them. */
     box-shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.9);
+  }
+
+  /* A cropped screenshot has no bezel, so give it its own edge. */
+  .clip img {
+    display: block;
+    border: 1px solid var(--hairline);
   }
 
   .clip figcaption {

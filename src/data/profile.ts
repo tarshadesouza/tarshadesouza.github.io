@@ -183,7 +183,8 @@ export const internalWork: {
   blurb: string;
   points: string[];
   stack: string[];
-  clips: {
+  /** Screen recordings. Omit for a case study that only has stills. */
+  clips?: {
     src: string;
     poster: string;
     width: number;
@@ -191,7 +192,40 @@ export const internalWork: {
     caption: string;
     alt: string;
   }[];
-}[] = [];
+  /** Stills. `src` is the WebP; the PNG beside it is the fallback. */
+  shots?: {
+    src: string;
+    width: number;
+    height: number;
+    caption: string;
+    alt: string;
+  }[];
+}[] = [
+  {
+    name: 'App Intents with live data',
+    org: 'Expedia Group',
+    role: 'iOS',
+    summary: 'A hackathon win that shipped, and is still in the app.',
+    blurb:
+      'Expedia’s core journeys surfaced as App Intents, so a traveller can start a search from Spotlight or Siri without opening the app first — backed by live data rather than static shortcuts.',
+    points: [
+      'Won the company hackathon, then carried it through to production rather than leaving it as a demo.',
+      '130,000+ events between 25 September and 7 October 2024.',
+      '120,000 of those came from the lodging intent alone.',
+      'Still shipping in the Expedia app today.',
+    ],
+    stack: ['Swift', 'App Intents', 'iOS'],
+    shots: [
+      {
+        src: '/work/app-intents.webp',
+        width: 1170,
+        height: 490,
+        caption: 'Find Places to Stay, Find flights and Find Packages, surfaced in iOS Spotlight.',
+        alt: 'iOS Spotlight search for “expedia”, showing the Expedia app alongside three App Intent shortcuts: Find Places to Stay, Find flights, and Find Packages.',
+      },
+    ],
+  },
+];
 
 /* ── Currently working on ────────────────────────────────────────────────── */
 
@@ -252,7 +286,11 @@ export const experience = [
             tags: ['iOS', 'Design Systems', 'CI/CD', 'Artifactory'],
           },
           {
-            text: 'Created Xray, an internal debugging tool for design-system components. Won a company hackathon with an iOS widget and carried it through to production.',
+            text: 'Won a company hackathon with App Intents backed by live data, and carried it through to production — 130,000+ events between 25 September and 7 October 2024, 120,000 of them from the lodging intent alone. It ships in the Expedia app today.',
+            tags: ['Swift', 'iOS', 'App Intents'],
+          },
+          {
+            text: 'Created Xray, an internal debugging tool for design-system components.',
             tags: ['Swift', 'iOS', 'Developer Tooling'],
           },
         ],
