@@ -68,6 +68,12 @@ digest every Monday: visitors, countries, referrers and devices from Cloudflare 
 Analytics, plus search queries, impressions, click-through rate and average position from
 Google Search Console. Every figure is compared with the previous seven days.
 
+It opens with a fourteen-day bar chart — this week in the accent colour against the week
+before it in grey — so the shape is visible before any number is read. The chart is built
+from table cells rather than SVG, because Gmail strips inline SVG and Outlook renders
+through Word. A closing **What it says** section turns the figures into sentences, and
+says so plainly when a weekly total is too small to read a trend into.
+
 Preview it locally without sending:
 
 ```bash

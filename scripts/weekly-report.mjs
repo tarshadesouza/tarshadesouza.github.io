@@ -300,6 +300,57 @@ async function cloudflareBreakdown(dimension, start, end, format = (v) => v) {
   });
 }
 
+/**
+ * One row per day, so the report can show shape rather than a single number.
+ * A total tells you Tuesday and Friday added to nine; it can't tell you they
+ * were nine and zero, which is the part worth knowing.
+ *
+ * Deliberately no orderBy: `date` is a confirmed dimension but the matching
+ * sort enum isn't, and sorting fourteen rows here costs nothing.
+ */
+async function cloudflareDaily(start, end) {
+  const build = (metrics) => `{
+    viewer {
+      accounts(filter: { accountTag: ${q(CLOUDFLARE_ACCOUNT_ID)} }) {
+        rumPageloadEventsAdaptiveGroups(limit: 200, filter: ${filterLiteral(start, end)}) {
+          ${metrics}
+          dimensions { date }
+        }
+      }
+    }
+  }`;
+
+  let data;
+  try {
+    data = await cloudflareQuery(build('count\n          sum { visits }'));
+  } catch (error) {
+    if (!/visits|sum/i.test(error.message)) throw error;
+    data = await cloudflareQuery(build('count'));
+  }
+
+  const byDate = new Map();
+  for (const row of data.rumPageloadEventsAdaptiveGroups ?? []) {
+    const key = row.dimensions?.date;
+    if (!key) continue;
+    byDate.set(key, {
+      views: row.count ?? 0,
+      visits: row.sum?.visits ?? row.count ?? 0,
+    });
+  }
+  return byDate;
+}
+
+/** Fourteen calendar days ending today, with the empty ones filled in as zero. */
+function buildSeries(byDate) {
+  const midnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return Array.from({ length: 14 }, (_, i) => {
+    const date = new Date(midnight - (13 - i) * DAY);
+    const key = iso(date);
+    const hit = byDate.get(key) ?? { views: 0, visits: 0 };
+    return { date, key, ...hit };
+  });
+}
+
 async function collectCloudflare() {
   if (!CLOUDFLARE_API_TOKEN || !CLOUDFLARE_ACCOUNT_ID) {
     problems.push('Cloudflare skipped — CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID not set');
@@ -314,6 +365,14 @@ async function collectCloudflare() {
       cloudflareTotals(previous.start, previous.end).catch(() => null),
     ]);
 
+    // Fourteen days, so this week can be drawn against the one before it.
+    let series = null;
+    try {
+      series = buildSeries(await cloudflareDaily(previous.start, period.end));
+    } catch (error) {
+      problems.push(`Cloudflare day-by-day unavailable: ${error.message}`);
+    }
+
     const tables = [];
     for (const { key, title, format } of BREAKDOWNS) {
       try {
@@ -324,7 +383,7 @@ async function collectCloudflare() {
       }
     }
 
-    return { current, prior, tables };
+    return { current, prior, tables, series };
   } catch (error) {
     const why = /auth/i.test(error.message) ? ` — ${await explainCloudflareAuth()}` : '';
     problems.push(`Cloudflare unavailable: ${error.message}${why}`);
@@ -445,6 +504,82 @@ const bar = (value, max) => '█'.repeat(Math.max(1, Math.round((value / (max ||
 
 const clicks = (n) => `${n} click${n === 1 ? '' : 's'}`;
 
+const dayLabel = (date) =>
+  date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', timeZone: 'UTC' });
+
+/** Eight block heights, with a dot for a genuine zero so it reads as empty. */
+const SPARK = '▁▂▃▄▅▆▇█';
+const sparkline = (values) => {
+  const max = Math.max(...values, 1);
+  return values
+    .map((v) => (v === 0 ? '·' : SPARK[Math.min(7, Math.floor((v / max) * 7.999))]))
+    .join('');
+};
+
+/**
+ * What the numbers actually say, in sentences. A count on its own invites you
+ * to read a trend into noise, so these lines lead with the caveat when the
+ * sample is too small to carry one.
+ */
+function takeaways(cloudflare, search) {
+  const out = [];
+  if (!cloudflare) return out;
+
+  const { current, prior, tables, series } = cloudflare;
+
+  if (series) {
+    const week = series.slice(7);
+    const best = week.reduce((a, b) => (b.visits > a.visits ? b : a), week[0]);
+    const active = week.filter((d) => d.visits > 0).length;
+    if (best?.visits > 0) {
+      out.push(
+        `Busiest day was ${dayLabel(best.date)} with ${best.visits} visit${best.visits === 1 ? '' : 's'}; ${active} of 7 days had any traffic at all.`,
+      );
+    }
+  }
+
+  if (prior && prior.visits > 0) {
+    const change = current.visits - prior.visits;
+    if (change !== 0) {
+      out.push(
+        `${change > 0 ? 'Up' : 'Down'} ${Math.abs(change)} visit${Math.abs(change) === 1 ? '' : 's'} on the week before (${prior.visits} → ${current.visits}).`,
+      );
+    }
+  }
+
+  const referrers = tables.find((t) => t.title === 'How they got here');
+  if (referrers) {
+    const named = referrers.rows.filter((r) => r.label !== '(direct / unknown)');
+    const total = referrers.rows.reduce((sum, r) => sum + r.value, 0);
+    if (named.length) {
+      const top = named[0];
+      out.push(`${top.label} was the biggest referrer, sending ${top.value} of ${total} views.`);
+    } else if (total) {
+      out.push(
+        'Every visit was direct or from an untracked link — nothing is sending traffic yet. Linking the site from LinkedIn, your GitHub profile and your Medium bio is what changes that.',
+      );
+    }
+  }
+
+  if (search && search.totals.impressions === 0) {
+    out.push(
+      'Still no search impressions. Google has the site indexed but is not yet showing it for anything — expect weeks, not days.',
+    );
+  } else if (search && search.totals.impressions > 0 && search.totals.clicks === 0) {
+    out.push(
+      `Shown ${search.totals.impressions} times in search but clicked zero times — you are ranking too low to be seen, or the title and description are not compelling at that position.`,
+    );
+  }
+
+  if (current.visits > 0 && current.visits < 10) {
+    out.push(
+      'Numbers this small are noise, not trend — treat week-on-week percentages here with suspicion until the weekly total reaches the low tens.',
+    );
+  }
+
+  return out;
+}
+
 /**
  * Cloudflare reports countries as ISO alpha-2 codes. "ES" is not what you want
  * to read at 8am on a Monday. Intl is built into node, so this costs nothing.
@@ -463,11 +598,27 @@ function renderText(cloudflare, search) {
   const out = [`Weekly report · ${period.label}`, '='.repeat(46), ''];
 
   if (cloudflare) {
-    const { current, prior, tables } = cloudflare;
+    const { current, prior, tables, series } = cloudflare;
     out.push('VISITORS (Cloudflare)');
     out.push(`  ${current.visits} visits ${prior ? pct(current.visits, prior.visits) : ''}`);
     out.push(`  ${current.pageViews} page views ${prior ? pct(current.pageViews, prior.pageViews) : ''}`);
     out.push('');
+
+    if (series) {
+      const week = series.slice(7);
+      const max = Math.max(...week.map((d) => d.visits));
+      out.push('  Day by day');
+      for (const day of week) {
+        // A day with no visits gets a dot, so the row reads as a real zero
+        // rather than as a line that failed to render.
+        const drawn = day.visits ? bar(day.visits, max) : '·';
+        out.push(`    ${dayLabel(day.date).padEnd(7)} ${drawn.padEnd(19)} ${day.visits}`);
+      }
+      out.push('');
+      out.push(`  Last 14 days  ${sparkline(series.map((d) => d.visits))}`);
+      out.push(`                ${'└ two weeks ago'.padEnd(14)}${'today'.padStart(7)}`);
+      out.push('');
+    }
 
     for (const table of tables) {
       const max = Math.max(...table.rows.map((r) => r.value));
@@ -512,6 +663,13 @@ function renderText(cloudflare, search) {
     }
   }
 
+  const notes = takeaways(cloudflare, search);
+  if (notes.length) {
+    out.push('WHAT IT SAYS');
+    notes.forEach((n) => out.push(`  · ${n}`));
+    out.push('');
+  }
+
   if (problems.length) {
     out.push('NOTES');
     problems.forEach((p) => out.push(`  · ${p}`));
@@ -546,6 +704,56 @@ function renderHtml(cloudflare, search) {
     note: 'color:#8b7040;font-size:12px;background:#1a1608;border:1px solid #2e2510;border-radius:8px;padding:12px;margin-top:28px',
   };
 
+  /**
+   * A bar chart made of table cells and divs. Gmail strips <svg> and Outlook
+   * renders through Word, so the only thing that draws reliably everywhere is
+   * a block with a background colour and a pixel height.
+   *
+   * Fourteen bars: last week in grey, this week in the accent, so the shape of
+   * one sits directly against the other.
+   */
+  const chart = (series) => {
+    const max = Math.max(...series.map((d) => d.visits), 1);
+    const H = 88;
+
+    const cells = series
+      .map((d, i) => {
+        const thisWeek = i >= 7;
+        // A zero day still gets a sliver, otherwise the column reads as missing
+        // data rather than as a real zero.
+        const height = d.visits === 0 ? 3 : Math.max(6, Math.round((d.visits / max) * H));
+        const colour = d.visits === 0 ? '#23252c' : thisWeek ? '#ff704d' : '#3a3d47';
+        // Explicit width, or the cells size themselves to their contents and
+        // the bars come out at a dozen different widths.
+        return `<td valign="bottom" width="7%" style="width:7.14%;vertical-align:bottom;padding:0 2px;height:${H}px">
+          <div style="height:${height}px;background:${colour};border-radius:3px;font-size:0;line-height:0">&nbsp;</div>
+        </td>`;
+      })
+      .join('');
+
+    const labels = series
+      .map((d, i) => {
+        const strong = i >= 7 && d.visits > 0;
+        return `<td width="7%" style="width:7.14%;text-align:center;padding:6px 0 0;font-size:10px;color:${strong ? '#9aa0b0' : '#4a4e5a'}">${dayLabel(
+          d.date,
+        ).charAt(0)}</td>`;
+      })
+      .join('');
+
+    const busiest = series.slice(7).reduce((a, b) => (b.visits > a.visits ? b : a), series[7]);
+
+    return `
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:18px 0 4px">
+        <tr>${cells}</tr>
+        <tr>${labels}</tr>
+      </table>
+      <p style="${css.label};font-size:11px;color:#6b7183">
+        <span style="color:#3a3d47">&#9608;</span> previous 7 days &nbsp;
+        <span style="color:#ff704d">&#9608;</span> this week &nbsp;·&nbsp;
+        peak ${busiest?.visits ?? 0} on ${esc(dayLabel(busiest?.date ?? series[13].date))}
+      </p>`;
+  };
+
   const table = (head, rows) => `
     <table style="${css.table}">
       <tr>${head.map((h) => `<th style="${css.th}">${esc(h)}</th>`).join('')}</tr>
@@ -564,10 +772,12 @@ function renderHtml(cloudflare, search) {
     <p style="${css.sub}">${esc(period.label)}</p>`;
 
   if (cloudflare) {
-    const { current, prior, tables } = cloudflare;
+    const { current, prior, tables, series } = cloudflare;
     html += `<h2 style="${css.h2}">Visitors</h2>
       <p style="${css.big}">${current.visits}<span style="${css.delta}">${prior ? esc(pct(current.visits, prior.visits)) : ''}</span></p>
       <p style="${css.label}">visits · ${current.pageViews} page views ${prior ? esc(pct(current.pageViews, prior.pageViews)) : ''}</p>`;
+
+    if (series) html += chart(series);
 
     for (const t of tables) {
       html += `<h2 style="${css.h2}">${esc(t.title)}</h2>`;
@@ -600,6 +810,14 @@ function renderHtml(cloudflare, search) {
       html += `<h2 style="${css.h2}">On what</h2>`;
       html += table(['device', 'clicks', 'seen'], devices.map((r) => [r.keys[0], r.clicks, r.impressions]));
     }
+  }
+
+  const notes = takeaways(cloudflare, search);
+  if (notes.length) {
+    html += `<h2 style="${css.h2}">What it says</h2>
+      <ul style="margin:0;padding-left:18px;color:#c9ccd6;font-size:13px">
+        ${notes.map((n) => `<li style="margin-bottom:7px">${esc(n)}</li>`).join('')}
+      </ul>`;
   }
 
   if (!cloudflare && !search) {
