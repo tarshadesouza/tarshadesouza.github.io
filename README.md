@@ -74,14 +74,14 @@ Preview it locally without sending:
 npm run report
 ```
 
-It needs six repository secrets (**Settings → Secrets and variables → Actions**). Any that
+It needs five repository secrets (**Settings → Secrets and variables → Actions**). Any that
 are missing simply drop their section from the report rather than failing the run:
 
 | Secret | Where it comes from |
 |---|---|
 | `CLOUDFLARE_API_TOKEN` | Cloudflare → My Profile → API Tokens → Create Token → *Account Analytics: Read* |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare dashboard → the ID in the URL, or Account Home sidebar |
-| `CLOUDFLARE_SITE_TAG` | Web Analytics → the site → its site tag (**not** the beacon token) |
+| `CLOUDFLARE_SITE_TAG` | *Optional.* Found automatically by matching the beacon token in `profile.ts` against the sites on your account — only set it to override that. |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | Google Cloud → service account → JSON key, pasted whole. Add the service account's email as a user in Search Console. |
 | `RESEND_API_KEY` | resend.com → API Keys |
 | `REPORT_TO` | the address to send to |

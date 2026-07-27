@@ -24,7 +24,8 @@
  * Environment (all set as GitHub Actions secrets):
  *   CLOUDFLARE_API_TOKEN       Account Analytics → Read
  *   CLOUDFLARE_ACCOUNT_ID      dash.cloudflare.com → right-hand sidebar
- *   CLOUDFLARE_SITE_TAG        Web Analytics → the site's tag (not the beacon token)
+ *   CLOUDFLARE_SITE_TAG        optional — looked up automatically by matching the
+ *                              beacon token in profile.ts against your sites
  *   GOOGLE_SERVICE_ACCOUNT_JSON  the whole key file, pasted in
  *   RESEND_API_KEY             resend.com → API keys
  *   REPORT_TO                  where to send it
@@ -52,6 +53,8 @@ const {
 /* Site URL comes from the same profile.ts that drives the site. */
 const profileSource = await readFile(resolve(ROOT, 'src/data/profile.ts'), 'utf8');
 const SITE_URL = profileSource.match(/url:\s*'([^']+)'/)?.[1] ?? 'https://tarshadesouza.github.io';
+/** The beacon token already in the site's HTML — used to find the site tag. */
+const BEACON_TOKEN = profileSource.match(/id:\s*'([0-9a-f]{32})'/)?.[1] ?? null;
 
 /* ── Dates ───────────────────────────────────────────────────────────────── */
 
@@ -89,8 +92,49 @@ async function cloudflareQuery(query, variables) {
   return body.data?.viewer?.accounts?.[0] ?? {};
 }
 
+/**
+ * The GraphQL analytics API wants a *site tag*, which is not the beacon token
+ * in the page and isn't shown anywhere obvious in the dashboard. Rather than
+ * make you hunt for it, look it up: the RUM site list returns both, so the
+ * site whose token matches the one in profile.ts is by definition the right
+ * one — which also side-steps the confusion of several sites on one hostname.
+ */
+async function resolveSiteTag() {
+  if (CLOUDFLARE_SITE_TAG) return CLOUDFLARE_SITE_TAG;
+
+  const res = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/rum/site_info/list`,
+    { headers: { authorization: `Bearer ${CLOUDFLARE_API_TOKEN}` } },
+  );
+  const body = await res.json();
+  if (!res.ok || !body.success) {
+    throw new Error(body.errors?.[0]?.message ?? `site list HTTP ${res.status}`);
+  }
+
+  const sites = body.result ?? [];
+  const host = new URL(SITE_URL).host;
+
+  const byToken = BEACON_TOKEN && sites.find((s) => s.site_token === BEACON_TOKEN);
+  if (byToken) return byToken.site_tag;
+
+  // No token match — fall back to the hostname, taking the busiest if the
+  // dashboard has duplicates for it.
+  const byHost = sites.filter((s) => JSON.stringify(s).includes(host));
+  if (byHost.length === 1) return byHost[0].site_tag;
+  if (byHost.length > 1) {
+    problems.push(
+      `${byHost.length} Cloudflare sites match ${host}; using the first. Delete the spares, or set CLOUDFLARE_SITE_TAG.`,
+    );
+    return byHost[0].site_tag;
+  }
+
+  throw new Error(`no Cloudflare site found for ${host} (${sites.length} site(s) on the account)`);
+}
+
+let siteTag = null;
+
 const cfFilter = (start, end) => ({
-  siteTag: CLOUDFLARE_SITE_TAG,
+  siteTag,
   datetime_geq: start.toISOString(),
   datetime_leq: end.toISOString(),
 });
@@ -148,12 +192,14 @@ async function cloudflareBreakdown(dimension, start, end) {
 }
 
 async function collectCloudflare() {
-  if (!CLOUDFLARE_API_TOKEN || !CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_SITE_TAG) {
-    problems.push('Cloudflare skipped — CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID or CLOUDFLARE_SITE_TAG not set');
+  if (!CLOUDFLARE_API_TOKEN || !CLOUDFLARE_ACCOUNT_ID) {
+    problems.push('Cloudflare skipped — CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID not set');
     return null;
   }
 
   try {
+    siteTag = await resolveSiteTag();
+
     const [current, prior] = await Promise.all([
       cloudflareTotals(period.start, period.end),
       cloudflareTotals(previous.start, previous.end).catch(() => null),
