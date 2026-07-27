@@ -23,7 +23,7 @@ export const site = {
   name: 'Tarsha de Souza',
   /** Shown under your name in the hero, and as the SEO meta description. */
   role: 'Senior Software Engineer',
-  tagline: 'iOS at the core, and the range to work across the stack.',
+  tagline: 'iOS at the core — and I go where the problem is.',
   /**
    * The meta description recruiters and search engines see. Keep it under ~155
    * characters and lead with the words people actually search for.
@@ -109,7 +109,7 @@ export const verification = {
  * badges do that for you automatically).
  */
 export const intro = [
-  'Seven years of production engineering, with iOS at the core — I build the design-system platform that 23 Expedia Group brands ship on. For the last two years I’ve been widening: embedded with a marketing ML team shipping production pipeline changes, and building multi-agent AI tooling.',
+  'Seven years of production engineering, with iOS at the core — I build the design-system platform that 23 Expedia Group brands ship on. I’m also the engineer teams borrow when the problem sits somewhere else: a stint on a marketing ML team fixing a production PySpark pipeline, multi-agent AI tooling, build systems, CI. An unfamiliar stack and someone else’s codebase is the part I like.',
   'Right now I’m building CyclOps, an open-source GitHub App that reads failing CI, explains it in plain language, and fixes it with a coding agent that loops until the build is green.',
 ];
 
@@ -202,7 +202,7 @@ export const internalWork: {
 export const now = [
   { text: 'Building CyclOps — open-source CI failure triage that fixes what it finds', tag: 'building' },
   {
-    text: 'Embedded with Expedia’s marketing ML team, shipping production pipeline changes in PySpark on Databricks and Airflow',
+    text: 'Picking up work with Expedia’s marketing ML team — production pipeline changes in PySpark on Databricks and Airflow',
     tag: 'shipping',
   },
   {
@@ -228,7 +228,7 @@ export const experience = [
     period: 'Dec 2020 — Present',
     location: 'Madrid, Spain',
     summary:
-      'The design-system platform 23 brands build on — and, over the last two years, two deliberate steps outside it.',
+      'The design-system platform 23 brands build on — plus the work that took me outside it, wherever a team needed a pair of hands.',
     /**
      * Grouped rather than one flat list, because the three strands are the
      * point: the depth is iOS, the range is everything after it.
@@ -260,7 +260,7 @@ export const experience = [
       {
         label: 'ML engineering',
         id: 'ml',
-        note: 'embedded with the marketing ML team, 2026',
+        note: 'a stint with the marketing ML team, 2026',
         highlights: [
           {
             text: 'Refactored the production cost/volume circuit breaker in a churn-prevention PySpark pipeline from hardcoded brand logic to a config-driven market registry — new markets now onboard through a YAML change with zero code changes, verified against production data on Databricks and the live Airflow job.',

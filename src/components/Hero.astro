@@ -27,9 +27,14 @@ const surname = rest.join(' ');
       <span data-reveal style="--reveal-delay:180ms" class="block"><em>{surname}</em></span>
     </h1>
 
+    {/* The one line someone reads if they read nothing else. */}
+    {site.tagline && !isTodo(site.tagline) && (
+      <p class="hero-tagline" data-reveal style="--reveal-delay:240ms">{site.tagline}</p>
+    )}
+
     <div class="prose">
       {intro.map((paragraph, i) => (
-        <p class="hero-lede" data-reveal style={`--reveal-delay:${280 + i * 90}ms`}>
+        <p class="hero-lede" data-reveal style={`--reveal-delay:${340 + i * 90}ms`}>
           {paragraph}
         </p>
       ))}
