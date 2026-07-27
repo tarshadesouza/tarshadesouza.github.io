@@ -48,15 +48,26 @@ import {
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DRY_RUN = process.argv.includes('--dry-run');
 
-const {
-  CLOUDFLARE_API_TOKEN,
-  CLOUDFLARE_ACCOUNT_ID,
-  CLOUDFLARE_SITE_TAG,
-  GOOGLE_SERVICE_ACCOUNT_JSON,
-  RESEND_API_KEY,
-  REPORT_TO,
-  REPORT_FROM = 'onboarding@resend.dev',
-} = process.env;
+/**
+ * GitHub Actions passes an unset secret as an empty string, not as an absent
+ * variable — so `const { X = 'default' } = process.env` never applies its
+ * default, because '' is not undefined. That silently sent Resend an empty
+ * from-address, which it rejected with "The domain is invalid".
+ *
+ * Trimming as well: a secret pasted with a trailing newline should just work.
+ */
+const env = (name, fallback) => {
+  const value = process.env[name]?.trim();
+  return value ? value : fallback;
+};
+
+const CLOUDFLARE_API_TOKEN = env('CLOUDFLARE_API_TOKEN');
+const CLOUDFLARE_ACCOUNT_ID = env('CLOUDFLARE_ACCOUNT_ID');
+const CLOUDFLARE_SITE_TAG = env('CLOUDFLARE_SITE_TAG');
+const GOOGLE_SERVICE_ACCOUNT_JSON = env('GOOGLE_SERVICE_ACCOUNT_JSON');
+const RESEND_API_KEY = env('RESEND_API_KEY');
+const REPORT_TO = env('REPORT_TO');
+const REPORT_FROM = env('REPORT_FROM', 'onboarding@resend.dev');
 
 /* Site URL comes from the same profile.ts that drives the site. */
 const profileSource = await readFile(resolve(ROOT, 'src/data/profile.ts'), 'utf8');
@@ -95,12 +106,14 @@ const problems = [];
  * rather than leaving it to guesswork.
  */
 function describeCredential() {
-  const value = (CLOUDFLARE_API_TOKEN ?? '').trim();
+  const value = CLOUDFLARE_API_TOKEN ?? '';
   const create =
     'create one at My Profile → API Tokens → Create Token → Custom, with Account · Account Analytics · Read';
 
-  if (value !== CLOUDFLARE_API_TOKEN) {
-    return `the secret has leading or trailing whitespace — re-paste it without a stray newline`;
+  // Compare against the raw variable: env() has already trimmed the one we use,
+  // so the stray-newline case is only visible here.
+  if (value !== (process.env.CLOUDFLARE_API_TOKEN ?? '')) {
+    return `the secret had leading or trailing whitespace, which has been trimmed — if it still fails, re-paste it`;
   }
   if (value === BEACON_TOKEN) {
     return `that is the Web Analytics beacon token from the site's HTML, not an API token. ${create}`;
@@ -609,6 +622,29 @@ async function send(subject, html, text) {
   return body.id;
 }
 
+/**
+ * Resend's errors are short. Say what to change, since the answer depends on
+ * whether a domain has been verified and that isn't visible from here.
+ */
+function explainSendFailure(message) {
+  if (/domain is invalid/i.test(message)) {
+    return (
+      `  from: ${JSON.stringify(REPORT_FROM)}\n` +
+      '  Resend only accepts a from-address on a domain you have verified, or its\n' +
+      '  shared onboarding@resend.dev — and that shared sender can only deliver to\n' +
+      '  the email address on your own Resend account. Either set REPORT_TO to that\n' +
+      '  address, or verify a domain at resend.com/domains and set REPORT_FROM to it.'
+    );
+  }
+  if (/api key|unauthor|forbidden/i.test(message)) {
+    return '  RESEND_API_KEY looks wrong or revoked — make a new one at resend.com/api-keys.';
+  }
+  if (/to|recipient/i.test(message)) {
+    return `  REPORT_TO is ${REPORT_TO ? 'set' : 'empty'}. With the shared sender it must be your own Resend account address.`;
+  }
+  return '  Check the Resend dashboard logs at resend.com/emails for the rejected request.';
+}
+
 /* ── Schema introspection ────────────────────────────────────────────────── */
 
 /**
@@ -749,16 +785,33 @@ const subject = cloudflare
   ? `Your week: ${cloudflare.current.visits} visits${search ? `, ${search.totals.clicks} from search` : ''}`
   : 'Your weekly site report';
 
-if (DRY_RUN || !RESEND_API_KEY || !REPORT_TO) {
-  console.log(text);
-  if (!DRY_RUN) console.log('\n(not sent — RESEND_API_KEY or REPORT_TO missing)');
+// Print first, send second. The numbers are already gathered by this point, and
+// a delivery problem shouldn't throw them away — the previous order lost a
+// complete report to a rejected from-address.
+console.log(text);
+
+let failed = false;
+
+if (DRY_RUN) {
+  // nothing to do — the report above is the whole point of a dry run
+} else if (!RESEND_API_KEY || !REPORT_TO) {
+  console.log('\n(not sent — RESEND_API_KEY or REPORT_TO missing)');
 } else {
-  const id = await send(subject, html, text);
-  console.log(text);
-  console.log(`\nSent to ${REPORT_TO} (${id})`);
+  try {
+    const id = await send(subject, html, text);
+    console.log(`\nSent to ${REPORT_TO} (${id})`);
+  } catch (error) {
+    failed = true;
+    console.error(`\nCould not send: ${error.message}`);
+    console.error(explainSendFailure(error.message));
+  }
 }
 
 // A missing credential is a setup problem, not a broken build: report it in
 // the log and the email, but don't fail the workflow and send a red X every
 // Monday morning.
 if (problems.length) console.warn(`\n${problems.length} note(s):\n  ${problems.join('\n  ')}`);
+
+// An email that never arrived is different — that one you do want to see as a
+// red X, because otherwise the first sign is a Monday with no report.
+if (failed) process.exit(1);
