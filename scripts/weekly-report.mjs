@@ -253,14 +253,14 @@ async function cloudflareTotals(start, end) {
  * table goes missing and says so, instead of the whole report failing.
  */
 const BREAKDOWNS = [
-  { key: 'countryName', title: 'Where they were' },
+  { key: 'countryName', title: 'Where they were', format: (v) => country(v) },
   { key: 'refererHost', title: 'How they got here' },
   { key: 'deviceType', title: 'On what' },
   { key: 'userAgentBrowser', title: 'In which browser' },
   { key: 'requestPath', title: 'Most-read pages' },
 ];
 
-async function cloudflareBreakdown(dimension, start, end) {
+async function cloudflareBreakdown(dimension, start, end, format = (v) => v) {
   const data = await cloudflareQuery(`{
     viewer {
       accounts(filter: { accountTag: ${q(CLOUDFLARE_ACCOUNT_ID)} }) {
@@ -276,10 +276,10 @@ async function cloudflareBreakdown(dimension, start, end) {
     }
   }`);
 
-  return (data.rumPageloadEventsAdaptiveGroups ?? []).map((row) => ({
-    label: row.dimensions?.[dimension] || '(direct / unknown)',
-    value: row.count ?? 0,
-  }));
+  return (data.rumPageloadEventsAdaptiveGroups ?? []).map((row) => {
+    const raw = row.dimensions?.[dimension];
+    return { label: raw ? format(raw) : '(direct / unknown)', value: row.count ?? 0 };
+  });
 }
 
 async function collectCloudflare() {
@@ -297,9 +297,9 @@ async function collectCloudflare() {
     ]);
 
     const tables = [];
-    for (const { key, title } of BREAKDOWNS) {
+    for (const { key, title, format } of BREAKDOWNS) {
       try {
-        const rows = await cloudflareBreakdown(key, period.start, period.end);
+        const rows = await cloudflareBreakdown(key, period.start, period.end, format);
         if (rows.length) tables.push({ title, rows });
       } catch (error) {
         problems.push(`Cloudflare "${title}" unavailable: ${error.message}`);
@@ -427,6 +427,20 @@ const bar = (value, max) => '█'.repeat(Math.max(1, Math.round((value / (max ||
 
 const clicks = (n) => `${n} click${n === 1 ? '' : 's'}`;
 
+/**
+ * Cloudflare reports countries as ISO alpha-2 codes. "ES" is not what you want
+ * to read at 8am on a Monday. Intl is built into node, so this costs nothing.
+ */
+const REGIONS = new Intl.DisplayNames(['en'], { type: 'region' });
+const country = (code) => {
+  if (!/^[A-Z]{2}$/.test(code)) return code;
+  try {
+    return REGIONS.of(code) ?? code;
+  } catch {
+    return code;
+  }
+};
+
 function renderText(cloudflare, search) {
   const out = [`Weekly report · ${period.label}`, '='.repeat(46), ''];
 
@@ -452,7 +466,14 @@ function renderText(cloudflare, search) {
     out.push('SEARCH (Google)');
     out.push(`  ${clicks(totals.clicks)} ${pct(totals.clicks, prior.clicks)}`);
     out.push(`  ${totals.impressions} impressions ${pct(totals.impressions, prior.impressions)}`);
-    out.push(`  ${totals.ctr.toFixed(1)}% click-through · average position ${totals.position.toFixed(1)}`);
+    // With no impressions there is no rate and no position — printing "0.0%
+    // click-through · average position 0.0" reads like a ranking of zero
+    // rather than an absence of data.
+    out.push(
+      totals.impressions
+        ? `  ${totals.ctr.toFixed(1)}% click-through · average position ${totals.position.toFixed(1)}`
+        : "  Not shown in search results yet — normal for a site Google has only just indexed.",
+    );
     out.push('');
 
     if (queries.length) {
@@ -484,7 +505,9 @@ function renderText(cloudflare, search) {
     out.push('environment variables this needs.');
   }
 
-  return out.join('\n');
+  // A delta that isn't there ("5 visits " with nothing after it) leaves a
+  // trailing space on the line.
+  return out.map((line) => line.trimEnd()).join('\n');
 }
 
 function renderHtml(cloudflare, search) {
@@ -538,7 +561,11 @@ function renderHtml(cloudflare, search) {
     const { totals, prior, queries, countries, devices } = search;
     html += `<h2 style="${css.h2}">Found in search</h2>
       <p style="${css.big}">${totals.clicks}<span style="${css.delta}">${esc(pct(totals.clicks, prior.clicks))}</span></p>
-      <p style="${css.label}">clicks from ${totals.impressions} impressions ${esc(pct(totals.impressions, prior.impressions))} · ${totals.ctr.toFixed(1)}% CTR · avg position ${totals.position.toFixed(1)}</p>`;
+      <p style="${css.label}">clicks from ${totals.impressions} impressions ${esc(pct(totals.impressions, prior.impressions))}${
+        totals.impressions
+          ? ` · ${totals.ctr.toFixed(1)}% CTR · avg position ${totals.position.toFixed(1)}`
+          : ' — not shown in search results yet'
+      }</p>`;
 
     if (queries.length) {
       html += `<h2 style="${css.h2}">What they searched</h2>`;
