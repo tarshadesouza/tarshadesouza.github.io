@@ -79,10 +79,14 @@ export const analytics = {
   provider: 'cloudflare' as 'none' | 'cloudflare' | 'goatcounter' | 'plausible',
   /**
    * Cloudflare beacon token, GoatCounter subdomain, or Plausible domain.
-   * Nothing loads while this is empty, so the site stays script-free until
-   * you paste the token in. `npm run build` warns if it's still blank.
+   *
+   * This is deliberately not a secret. The beacon token is a public site
+   * identifier: it ships in the HTML of every page, so every visitor already
+   * has it. It grants no access to the Cloudflare account and can't read the
+   * dashboard — hiding it in an Actions secret would achieve nothing, since
+   * the built HTML publishes it either way.
    */
-  id: '',
+  id: '4b39c4bf227148f1a7bd6759cd35583a',
 };
 
 /**

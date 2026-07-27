@@ -103,7 +103,7 @@ const personSchema = {
     {analytics.provider === 'cloudflare' && analytics.id && (
       <script
         is:inline
-        defer
+        type="module"
         src="https://static.cloudflareinsights.com/beacon.min.js"
         data-cf-beacon={`{"token": "${analytics.id}"}`}
       />
