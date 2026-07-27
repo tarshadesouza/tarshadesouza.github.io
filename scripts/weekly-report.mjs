@@ -129,14 +129,14 @@ async function explainCloudflareAuth() {
   }
 }
 
-async function cloudflareQuery(query, variables) {
+async function cloudflareQuery(query) {
   const res = await fetch('https://api.cloudflare.com/client/v4/graphql', {
     method: 'POST',
     headers: {
       authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
       'content-type': 'application/json',
     },
-    body: JSON.stringify({ query, variables }),
+    body: JSON.stringify({ query }),
   });
 
   const body = await res.json();
@@ -193,27 +193,40 @@ async function resolveSiteTag() {
 
 let siteTag = null;
 
-const cfFilter = (start, end) => ({
-  siteTag,
-  datetime_geq: start.toISOString(),
-  datetime_leq: end.toISOString(),
-});
+const q = (value) => JSON.stringify(value);
+
+/**
+ * The filter is inlined rather than passed as a typed GraphQL variable: the
+ * name of its input type differs between Cloudflare's datasets, and naming it
+ * wrong fails the entire query. Everything interpolated here is ours — an
+ * account id, a site tag from their API, and two ISO timestamps.
+ */
+const filterLiteral = (start, end) =>
+  `{ siteTag: ${q(siteTag)}, datetime_geq: ${q(start.toISOString())}, datetime_leq: ${q(end.toISOString())} }`;
 
 async function cloudflareTotals(start, end) {
-  const data = await cloudflareQuery(
-    `query($accountTag: string!, $filter: ZoneRumPageloadEventsAdaptiveGroupsFilter_InputObject!) {
-       accounts(filter: { accountTag: $accountTag }) {
-         rumPageloadEventsAdaptiveGroups(limit: 1, filter: $filter) {
-           count
-           sum { visits }
-         }
-       }
-     }`,
-    { accountTag: CLOUDFLARE_ACCOUNT_ID, filter: cfFilter(start, end) },
-  );
+  const build = (metrics) => `{
+    viewer {
+      accounts(filter: { accountTag: ${q(CLOUDFLARE_ACCOUNT_ID)} }) {
+        rumPageloadEventsAdaptiveGroups(limit: 1, filter: ${filterLiteral(start, end)}) {
+          ${metrics}
+        }
+      }
+    }
+  }`;
+
+  let data;
+  try {
+    data = await cloudflareQuery(build('count\n          sum { visits }'));
+  } catch (error) {
+    // `visits` isn't present on every dataset version. Page views alone still
+    // makes a useful headline, so degrade rather than lose the whole section.
+    problems.push(`Cloudflare visit counts unavailable (${error.message}); reporting page views only`);
+    data = await cloudflareQuery(build('count'));
+  }
 
   const row = data.rumPageloadEventsAdaptiveGroups?.[0];
-  return { pageViews: row?.count ?? 0, visits: row?.sum?.visits ?? 0 };
+  return { pageViews: row?.count ?? 0, visits: row?.sum?.visits ?? row?.count ?? 0 };
 }
 
 /**
@@ -229,25 +242,24 @@ const BREAKDOWNS = [
 ];
 
 async function cloudflareBreakdown(dimension, start, end) {
-  const data = await cloudflareQuery(
-    `query($accountTag: string!, $filter: ZoneRumPageloadEventsAdaptiveGroupsFilter_InputObject!) {
-       accounts(filter: { accountTag: $accountTag }) {
-         rumPageloadEventsAdaptiveGroups(
-           limit: 8
-           filter: $filter
-           orderBy: [sum_visits_DESC]
-         ) {
-           sum { visits }
-           dimensions { ${dimension} }
-         }
-       }
-     }`,
-    { accountTag: CLOUDFLARE_ACCOUNT_ID, filter: cfFilter(start, end) },
-  );
+  const data = await cloudflareQuery(`{
+    viewer {
+      accounts(filter: { accountTag: ${q(CLOUDFLARE_ACCOUNT_ID)} }) {
+        rumPageloadEventsAdaptiveGroups(
+          limit: 8
+          filter: ${filterLiteral(start, end)}
+          orderBy: [count_DESC]
+        ) {
+          count
+          dimensions { ${dimension} }
+        }
+      }
+    }
+  }`);
 
   return (data.rumPageloadEventsAdaptiveGroups ?? []).map((row) => ({
     label: row.dimensions?.[dimension] || '(direct / unknown)',
-    value: row.sum?.visits ?? 0,
+    value: row.count ?? 0,
   }));
 }
 
@@ -499,7 +511,7 @@ function renderHtml(cloudflare, search) {
 
     for (const t of tables) {
       html += `<h2 style="${css.h2}">${esc(t.title)}</h2>`;
-      html += table(['', 'visits'], t.rows.map((r) => [r.label, r.value]));
+      html += table(['', 'views'], t.rows.map((r) => [r.label, r.value]));
     }
   }
 
