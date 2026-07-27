@@ -61,6 +61,37 @@ GITHUB_TOKEN=ghp_xxx npm run sync
 
 CI passes the automatic `secrets.GITHUB_TOKEN`, so no secret needs configuring.
 
+## Weekly report
+
+[`.github/workflows/weekly-report.yml`](.github/workflows/weekly-report.yml) emails a
+digest every Monday: visitors, countries, referrers and devices from Cloudflare Web
+Analytics, plus search queries, impressions, click-through rate and average position from
+Google Search Console. Every figure is compared with the previous seven days.
+
+Preview it locally without sending:
+
+```bash
+npm run report
+```
+
+It needs six repository secrets (**Settings → Secrets and variables → Actions**). Any that
+are missing simply drop their section from the report rather than failing the run:
+
+| Secret | Where it comes from |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare → My Profile → API Tokens → Create Token → *Account Analytics: Read* |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare dashboard → the ID in the URL, or Account Home sidebar |
+| `CLOUDFLARE_SITE_TAG` | Web Analytics → the site → its site tag (**not** the beacon token) |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | Google Cloud → service account → JSON key, pasted whole. Add the service account's email as a user in Search Console. |
+| `RESEND_API_KEY` | resend.com → API Keys |
+| `REPORT_TO` | the address to send to |
+
+`REPORT_FROM` is optional and defaults to Resend's shared sender, which can only send to
+your own Resend account address. Verify a domain with Resend to send from your own.
+
+Test the whole thing without waiting for Monday: **Actions → Weekly report → Run workflow**,
+with *dry run* ticked to print the report into the log instead of emailing it.
+
 ## Deployment
 
 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) builds and deploys on:

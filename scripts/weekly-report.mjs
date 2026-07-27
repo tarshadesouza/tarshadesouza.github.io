@@ -1,0 +1,469 @@
+#!/usr/bin/env node
+/**
+ * The Monday morning email: who visited the site last week, where they came
+ * from, and what they searched to find it.
+ *
+ * Two sources, because neither tells the whole story on its own:
+ *
+ *   • Cloudflare Web Analytics (GraphQL) — the people who actually arrived.
+ *     Visits, countries, referrers, devices, browsers, most-read sections.
+ *   • Google Search Console (REST) — the people who saw you in search but may
+ *     not have clicked. The queries, impressions, click-through rate and
+ *     average position. This is the half that tells you what you rank for.
+ *
+ * Each block is fetched independently and failures are contained: if the
+ * Cloudflare token expires, you still get the search half, with a line saying
+ * what broke. A report that arrives partial beats one that doesn't arrive.
+ *
+ * Every number is compared with the previous seven days, because a count on
+ * its own ("31 visits") means far less than its direction.
+ *
+ *   node scripts/weekly-report.mjs --dry-run   # print, don't send
+ *   npm run report                             # same
+ *
+ * Environment (all set as GitHub Actions secrets):
+ *   CLOUDFLARE_API_TOKEN       Account Analytics → Read
+ *   CLOUDFLARE_ACCOUNT_ID      dash.cloudflare.com → right-hand sidebar
+ *   CLOUDFLARE_SITE_TAG        Web Analytics → the site's tag (not the beacon token)
+ *   GOOGLE_SERVICE_ACCOUNT_JSON  the whole key file, pasted in
+ *   RESEND_API_KEY             resend.com → API keys
+ *   REPORT_TO                  where to send it
+ *   REPORT_FROM                optional; defaults to Resend's shared sender
+ */
+
+import { readFile } from 'node:fs/promises';
+import { createSign } from 'node:crypto';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const DRY_RUN = process.argv.includes('--dry-run');
+
+const {
+  CLOUDFLARE_API_TOKEN,
+  CLOUDFLARE_ACCOUNT_ID,
+  CLOUDFLARE_SITE_TAG,
+  GOOGLE_SERVICE_ACCOUNT_JSON,
+  RESEND_API_KEY,
+  REPORT_TO,
+  REPORT_FROM = 'onboarding@resend.dev',
+} = process.env;
+
+/* Site URL comes from the same profile.ts that drives the site. */
+const profileSource = await readFile(resolve(ROOT, 'src/data/profile.ts'), 'utf8');
+const SITE_URL = profileSource.match(/url:\s*'([^']+)'/)?.[1] ?? 'https://tarshadesouza.github.io';
+
+/* ── Dates ───────────────────────────────────────────────────────────────── */
+
+const DAY = 86_400_000;
+const iso = (d) => d.toISOString().slice(0, 10);
+const now = new Date();
+
+const period = {
+  start: new Date(now.getTime() - 7 * DAY),
+  end: now,
+  label: `${iso(new Date(now.getTime() - 7 * DAY))} → ${iso(now)}`,
+};
+const previous = {
+  start: new Date(now.getTime() - 14 * DAY),
+  end: new Date(now.getTime() - 7 * DAY),
+};
+
+const problems = [];
+
+/* ── Cloudflare Web Analytics ────────────────────────────────────────────── */
+
+async function cloudflareQuery(query, variables) {
+  const res = await fetch('https://api.cloudflare.com/client/v4/graphql', {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+
+  const body = await res.json();
+  if (!res.ok) throw new Error(`Cloudflare HTTP ${res.status}`);
+  if (body.errors?.length) throw new Error(body.errors.map((e) => e.message).join('; '));
+  return body.data?.viewer?.accounts?.[0] ?? {};
+}
+
+const cfFilter = (start, end) => ({
+  siteTag: CLOUDFLARE_SITE_TAG,
+  datetime_geq: start.toISOString(),
+  datetime_leq: end.toISOString(),
+});
+
+async function cloudflareTotals(start, end) {
+  const data = await cloudflareQuery(
+    `query($accountTag: string!, $filter: ZoneRumPageloadEventsAdaptiveGroupsFilter_InputObject!) {
+       accounts(filter: { accountTag: $accountTag }) {
+         rumPageloadEventsAdaptiveGroups(limit: 1, filter: $filter) {
+           count
+           sum { visits }
+         }
+       }
+     }`,
+    { accountTag: CLOUDFLARE_ACCOUNT_ID, filter: cfFilter(start, end) },
+  );
+
+  const row = data.rumPageloadEventsAdaptiveGroups?.[0];
+  return { pageViews: row?.count ?? 0, visits: row?.sum?.visits ?? 0 };
+}
+
+/**
+ * Each breakdown is its own request. If Cloudflare renames a dimension, one
+ * table goes missing and says so, instead of the whole report failing.
+ */
+const BREAKDOWNS = [
+  { key: 'countryName', title: 'Where they were' },
+  { key: 'refererHost', title: 'How they got here' },
+  { key: 'deviceType', title: 'On what' },
+  { key: 'userAgentBrowser', title: 'In which browser' },
+  { key: 'requestPath', title: 'Most-read pages' },
+];
+
+async function cloudflareBreakdown(dimension, start, end) {
+  const data = await cloudflareQuery(
+    `query($accountTag: string!, $filter: ZoneRumPageloadEventsAdaptiveGroupsFilter_InputObject!) {
+       accounts(filter: { accountTag: $accountTag }) {
+         rumPageloadEventsAdaptiveGroups(
+           limit: 8
+           filter: $filter
+           orderBy: [sum_visits_DESC]
+         ) {
+           sum { visits }
+           dimensions { ${dimension} }
+         }
+       }
+     }`,
+    { accountTag: CLOUDFLARE_ACCOUNT_ID, filter: cfFilter(start, end) },
+  );
+
+  return (data.rumPageloadEventsAdaptiveGroups ?? []).map((row) => ({
+    label: row.dimensions?.[dimension] || '(direct / unknown)',
+    value: row.sum?.visits ?? 0,
+  }));
+}
+
+async function collectCloudflare() {
+  if (!CLOUDFLARE_API_TOKEN || !CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_SITE_TAG) {
+    problems.push('Cloudflare skipped — CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID or CLOUDFLARE_SITE_TAG not set');
+    return null;
+  }
+
+  try {
+    const [current, prior] = await Promise.all([
+      cloudflareTotals(period.start, period.end),
+      cloudflareTotals(previous.start, previous.end).catch(() => null),
+    ]);
+
+    const tables = [];
+    for (const { key, title } of BREAKDOWNS) {
+      try {
+        const rows = await cloudflareBreakdown(key, period.start, period.end);
+        if (rows.length) tables.push({ title, rows });
+      } catch (error) {
+        problems.push(`Cloudflare "${title}" unavailable: ${error.message}`);
+      }
+    }
+
+    return { current, prior, tables };
+  } catch (error) {
+    problems.push(`Cloudflare unavailable: ${error.message}`);
+    return null;
+  }
+}
+
+/* ── Google Search Console ───────────────────────────────────────────────── */
+
+/** Service-account JWT → access token, signed with node's crypto. No deps. */
+async function googleAccessToken(credentials) {
+  const header = { alg: 'RS256', typ: 'JWT' };
+  const issued = Math.floor(Date.now() / 1000);
+  const claim = {
+    iss: credentials.client_email,
+    scope: 'https://www.googleapis.com/auth/webmasters.readonly',
+    aud: 'https://oauth2.googleapis.com/token',
+    exp: issued + 3600,
+    iat: issued,
+  };
+
+  const b64 = (obj) => Buffer.from(JSON.stringify(obj)).toString('base64url');
+  const unsigned = `${b64(header)}.${b64(claim)}`;
+  const signature = createSign('RSA-SHA256')
+    .update(unsigned)
+    .sign(credentials.private_key, 'base64url');
+
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion: `${unsigned}.${signature}`,
+    }),
+  });
+
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error_description || body.error || `HTTP ${res.status}`);
+  return body.access_token;
+}
+
+async function searchAnalytics(token, dimensions, start, end, rowLimit = 10) {
+  const site = encodeURIComponent(SITE_URL.endsWith('/') ? SITE_URL : `${SITE_URL}/`);
+  const res = await fetch(
+    `https://www.googleapis.com/webmasters/v3/sites/${site}/searchAnalytics/query`,
+    {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ startDate: iso(start), endDate: iso(end), dimensions, rowLimit }),
+    },
+  );
+
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error?.message || `HTTP ${res.status}`);
+  return body.rows ?? [];
+}
+
+const sumRows = (rows) =>
+  rows.reduce(
+    (acc, r) => ({
+      clicks: acc.clicks + (r.clicks ?? 0),
+      impressions: acc.impressions + (r.impressions ?? 0),
+      position: acc.position + (r.position ?? 0) * (r.impressions ?? 0),
+    }),
+    { clicks: 0, impressions: 0, position: 0 },
+  );
+
+async function collectSearch() {
+  if (!GOOGLE_SERVICE_ACCOUNT_JSON) {
+    problems.push('Search Console skipped — GOOGLE_SERVICE_ACCOUNT_JSON not set');
+    return null;
+  }
+
+  try {
+    const credentials = JSON.parse(GOOGLE_SERVICE_ACCOUNT_JSON);
+    const token = await googleAccessToken(credentials);
+
+    const [queries, countries, devices, pages, priorTotals] = await Promise.all([
+      searchAnalytics(token, ['query'], period.start, period.end),
+      searchAnalytics(token, ['country'], period.start, period.end),
+      searchAnalytics(token, ['device'], period.start, period.end),
+      searchAnalytics(token, ['page'], period.start, period.end, 5),
+      searchAnalytics(token, [], previous.start, previous.end).catch(() => []),
+    ]);
+
+    const totals = sumRows(queries);
+    const prior = sumRows(priorTotals);
+
+    return {
+      totals: {
+        clicks: totals.clicks,
+        impressions: totals.impressions,
+        ctr: totals.impressions ? (totals.clicks / totals.impressions) * 100 : 0,
+        position: totals.impressions ? totals.position / totals.impressions : 0,
+      },
+      prior,
+      queries,
+      countries,
+      devices,
+      pages,
+    };
+  } catch (error) {
+    problems.push(`Search Console unavailable: ${error.message}`);
+    return null;
+  }
+}
+
+/* ── Rendering ───────────────────────────────────────────────────────────── */
+
+const pct = (current, before) => {
+  if (!before) return current ? '(new)' : '';
+  const change = Math.round(((current - before) / before) * 100);
+  if (change === 0) return '(level)';
+  return change > 0 ? `(▲ ${change}%)` : `(▼ ${Math.abs(change)}%)`;
+};
+
+const bar = (value, max) => '█'.repeat(Math.max(1, Math.round((value / (max || 1)) * 18)));
+
+const clicks = (n) => `${n} click${n === 1 ? '' : 's'}`;
+
+function renderText(cloudflare, search) {
+  const out = [`Weekly report · ${period.label}`, '='.repeat(46), ''];
+
+  if (cloudflare) {
+    const { current, prior, tables } = cloudflare;
+    out.push('VISITORS (Cloudflare)');
+    out.push(`  ${current.visits} visits ${prior ? pct(current.visits, prior.visits) : ''}`);
+    out.push(`  ${current.pageViews} page views ${prior ? pct(current.pageViews, prior.pageViews) : ''}`);
+    out.push('');
+
+    for (const table of tables) {
+      const max = Math.max(...table.rows.map((r) => r.value));
+      out.push(`  ${table.title}`);
+      for (const row of table.rows) {
+        out.push(`    ${String(row.value).padStart(4)}  ${bar(row.value, max).padEnd(19)} ${row.label}`);
+      }
+      out.push('');
+    }
+  }
+
+  if (search) {
+    const { totals, prior, queries, countries, devices, pages } = search;
+    out.push('SEARCH (Google)');
+    out.push(`  ${clicks(totals.clicks)} ${pct(totals.clicks, prior.clicks)}`);
+    out.push(`  ${totals.impressions} impressions ${pct(totals.impressions, prior.impressions)}`);
+    out.push(`  ${totals.ctr.toFixed(1)}% click-through · average position ${totals.position.toFixed(1)}`);
+    out.push('');
+
+    if (queries.length) {
+      out.push('  What they searched');
+      for (const row of queries) {
+        out.push(`    ${clicks(row.clicks).padStart(9)} / ${String(row.impressions).padStart(4)} seen  "${row.keys[0]}"  (pos ${row.position.toFixed(0)})`);
+      }
+      out.push('');
+    }
+
+    for (const [title, rows] of [['Where from', countries], ['On what', devices], ['Which page', pages]]) {
+      if (!rows.length) continue;
+      out.push(`  ${title}`);
+      for (const row of rows.slice(0, 8)) {
+        out.push(`    ${clicks(row.clicks).padStart(9)} / ${String(row.impressions).padStart(4)} seen  ${row.keys[0]}`);
+      }
+      out.push('');
+    }
+  }
+
+  if (problems.length) {
+    out.push('NOTES');
+    problems.forEach((p) => out.push(`  · ${p}`));
+    out.push('');
+  }
+
+  if (!cloudflare && !search) {
+    out.push('No data sources are configured yet — see scripts/weekly-report.mjs for the');
+    out.push('environment variables this needs.');
+  }
+
+  return out.join('\n');
+}
+
+function renderHtml(cloudflare, search) {
+  const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+  const css = {
+    body: 'margin:0;padding:24px;background:#08090c;color:#e9eaef;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.6',
+    wrap: 'max-width:640px;margin:0 auto',
+    h1: 'font-size:22px;margin:0 0 4px;font-weight:600',
+    sub: 'color:#6b7183;font-size:13px;margin:0 0 28px',
+    h2: 'font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#ff704d;margin:32px 0 12px;font-weight:600',
+    big: 'font-size:30px;font-weight:600;color:#fff;margin:0',
+    label: 'color:#9aa0b0;font-size:13px',
+    delta: 'color:#6b7183;font-size:12px;margin-left:6px',
+    table: 'width:100%;border-collapse:collapse;margin:8px 0 4px;font-size:13px',
+    th: 'text-align:left;color:#6b7183;font-weight:400;font-size:11px;text-transform:uppercase;letter-spacing:.08em;padding:6px 0;border-bottom:1px solid #23252c',
+    td: 'padding:7px 0;border-bottom:1px solid #16181d;color:#c9ccd6',
+    num: 'padding:7px 0;border-bottom:1px solid #16181d;color:#fff;text-align:right;white-space:nowrap',
+    note: 'color:#8b7040;font-size:12px;background:#1a1608;border:1px solid #2e2510;border-radius:8px;padding:12px;margin-top:28px',
+  };
+
+  const table = (head, rows) => `
+    <table style="${css.table}">
+      <tr>${head.map((h) => `<th style="${css.th}">${esc(h)}</th>`).join('')}</tr>
+      ${rows
+        .map(
+          (r) =>
+            `<tr>${r
+              .map((cell, i) => `<td style="${i === 0 ? css.td : css.num}">${esc(cell)}</td>`)
+              .join('')}</tr>`,
+        )
+        .join('')}
+    </table>`;
+
+  let html = `<div style="${css.body}"><div style="${css.wrap}">
+    <h1 style="${css.h1}">Your week on ${esc(SITE_URL.replace('https://', ''))}</h1>
+    <p style="${css.sub}">${esc(period.label)}</p>`;
+
+  if (cloudflare) {
+    const { current, prior, tables } = cloudflare;
+    html += `<h2 style="${css.h2}">Visitors</h2>
+      <p style="${css.big}">${current.visits}<span style="${css.delta}">${prior ? esc(pct(current.visits, prior.visits)) : ''}</span></p>
+      <p style="${css.label}">visits · ${current.pageViews} page views ${prior ? esc(pct(current.pageViews, prior.pageViews)) : ''}</p>`;
+
+    for (const t of tables) {
+      html += `<h2 style="${css.h2}">${esc(t.title)}</h2>`;
+      html += table(['', 'visits'], t.rows.map((r) => [r.label, r.value]));
+    }
+  }
+
+  if (search) {
+    const { totals, prior, queries, countries, devices } = search;
+    html += `<h2 style="${css.h2}">Found in search</h2>
+      <p style="${css.big}">${totals.clicks}<span style="${css.delta}">${esc(pct(totals.clicks, prior.clicks))}</span></p>
+      <p style="${css.label}">clicks from ${totals.impressions} impressions ${esc(pct(totals.impressions, prior.impressions))} · ${totals.ctr.toFixed(1)}% CTR · avg position ${totals.position.toFixed(1)}</p>`;
+
+    if (queries.length) {
+      html += `<h2 style="${css.h2}">What they searched</h2>`;
+      html += table(
+        ['query', 'clicks', 'seen', 'pos'],
+        queries.map((r) => [r.keys[0], r.clicks, r.impressions, r.position.toFixed(0)]),
+      );
+    }
+    if (countries.length) {
+      html += `<h2 style="${css.h2}">Where from</h2>`;
+      html += table(['country', 'clicks', 'seen'], countries.slice(0, 8).map((r) => [r.keys[0], r.clicks, r.impressions]));
+    }
+    if (devices.length) {
+      html += `<h2 style="${css.h2}">On what</h2>`;
+      html += table(['device', 'clicks', 'seen'], devices.map((r) => [r.keys[0], r.clicks, r.impressions]));
+    }
+  }
+
+  if (!cloudflare && !search) {
+    html += `<p style="${css.label}">No data sources are configured yet.</p>`;
+  }
+
+  if (problems.length) {
+    html += `<div style="${css.note}">${problems.map((p) => esc(p)).join('<br>')}</div>`;
+  }
+
+  return `${html}</div></div>`;
+}
+
+/* ── Send ────────────────────────────────────────────────────────────────── */
+
+async function send(subject, html, text) {
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { authorization: `Bearer ${RESEND_API_KEY}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ from: REPORT_FROM, to: [REPORT_TO], subject, html, text }),
+  });
+
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.message || `Resend HTTP ${res.status}`);
+  return body.id;
+}
+
+/* ── Run ─────────────────────────────────────────────────────────────────── */
+
+const [cloudflare, search] = await Promise.all([collectCloudflare(), collectSearch()]);
+
+const text = renderText(cloudflare, search);
+const html = renderHtml(cloudflare, search);
+const subject = cloudflare
+  ? `Your week: ${cloudflare.current.visits} visits${search ? `, ${search.totals.clicks} from search` : ''}`
+  : 'Your weekly site report';
+
+if (DRY_RUN || !RESEND_API_KEY || !REPORT_TO) {
+  console.log(text);
+  if (!DRY_RUN) console.log('\n(not sent — RESEND_API_KEY or REPORT_TO missing)');
+} else {
+  const id = await send(subject, html, text);
+  console.log(text);
+  console.log(`\nSent to ${REPORT_TO} (${id})`);
+}
+
+// A missing credential is a setup problem, not a broken build: report it in
+// the log and the email, but don't fail the workflow and send a red X every
+// Monday morning.
+if (problems.length) console.warn(`\n${problems.length} note(s):\n  ${problems.join('\n  ')}`);

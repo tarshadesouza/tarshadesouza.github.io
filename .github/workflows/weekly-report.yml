@@ -1,0 +1,40 @@
+name: Weekly report
+
+on:
+  # Monday 08:07 UTC — early enough to be waiting for you, and off the hour so
+  # it isn't queued behind everything else scheduled at :00.
+  schedule:
+    - cron: '7 8 * * 1'
+
+  # Run it on demand to test the setup without waiting for Monday.
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Print the report in the log instead of emailing it'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # No install step: the script uses only node builtins and fetch.
+      - name: Build and send the report
+        run: node scripts/weekly-report.mjs ${{ inputs.dry_run && '--dry-run' || '' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_SITE_TAG: ${{ secrets.CLOUDFLARE_SITE_TAG }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          REPORT_TO: ${{ secrets.REPORT_TO }}
+          REPORT_FROM: ${{ secrets.REPORT_FROM }}
