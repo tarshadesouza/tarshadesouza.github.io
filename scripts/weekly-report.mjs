@@ -81,6 +81,34 @@ const problems = [];
  * a token without the right permission, and the wrong account. Ask the token
  * verify endpoint which it is, so the log says what to actually change.
  */
+/**
+ * Three different Cloudflare hex strings get confused for each other during
+ * setup. Their shapes differ, so say which one appears to have been pasted
+ * rather than leaving it to guesswork.
+ */
+function describeCredential() {
+  const value = (CLOUDFLARE_API_TOKEN ?? '').trim();
+  const create =
+    'create one at My Profile → API Tokens → Create Token → Custom, with Account · Account Analytics · Read';
+
+  if (value !== CLOUDFLARE_API_TOKEN) {
+    return `the secret has leading or trailing whitespace — re-paste it without a stray newline`;
+  }
+  if (value === BEACON_TOKEN) {
+    return `that is the Web Analytics beacon token from the site's HTML, not an API token. ${create}`;
+  }
+  if (/^[0-9a-f]{32}$/.test(value)) {
+    return `that looks like a Web Analytics beacon token (32 hex characters), not an API token. ${create}`;
+  }
+  if (/^[0-9a-f]{37}$/.test(value)) {
+    return `that looks like a Global API Key (37 hex characters), which this API does not accept. ${create}`;
+  }
+  if (/^[0-9a-f]{32,40}$/.test(value)) {
+    return `that looks like an account ID or another hex identifier rather than an API token. ${create}`;
+  }
+  return `it does not look like a valid API token. ${create}`;
+}
+
 async function explainCloudflareAuth() {
   try {
     const res = await fetch('https://api.cloudflare.com/client/v4/user/tokens/verify', {
@@ -95,10 +123,7 @@ async function explainCloudflareAuth() {
         'be the account that owns the Web Analytics site'
       );
     }
-    return (
-      'the token was rejected outright. If you pasted a Global API Key, that will not work here ' +
-      '— create an API *token* (My Profile → API Tokens → Create Token → Custom)'
-    );
+    return `the credential was rejected outright — ${describeCredential()}`;
   } catch {
     return 'could not reach the token verify endpoint to say why';
   }
