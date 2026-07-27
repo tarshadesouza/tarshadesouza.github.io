@@ -5,7 +5,7 @@ import { site } from './src/data/profile.ts';
 
 export default defineConfig({
   site: site.url,
-  integrations: [sitemap()],
+  integrations: [sitemap({ lastmod: new Date() })],
   build: { inlineStylesheets: 'auto' },
   compressHTML: true,
 });

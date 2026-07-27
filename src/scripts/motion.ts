@@ -247,9 +247,10 @@ function initLightbox() {
     if (event.target === dialog) dialog.close();
   });
 
-  // Don't hold a full-size image in memory once it's dismissed.
+  // Don't hold a full-size image in memory once it's dismissed. removeAttribute
+  // rather than src = '', which makes some browsers re-request the page URL.
   dialog.addEventListener('close', () => {
-    image.src = '';
+    image.removeAttribute('src');
   });
 }
 

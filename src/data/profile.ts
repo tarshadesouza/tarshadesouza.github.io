@@ -56,6 +56,31 @@ export const social = {
   email: 'tarshadesouza@hotmail.com',
 };
 
+/* ── Analytics ───────────────────────────────────────────────────────────── */
+
+/**
+ * All three options below are cookieless and store no personal data, which
+ * matters: analytics that sets cookies or profiles visitors needs a consent
+ * banner under GDPR, and a consent banner on a personal site is a worse
+ * trade than slightly coarser numbers.
+ *
+ *   'none'         — nothing loads at all (the default)
+ *   'cloudflare'   — Cloudflare Web Analytics. Free, unlimited. Sign up, add
+ *                    the site, paste the beacon token below.
+ *   'goatcounter'  — free for personal use, open source. `id` is the
+ *                    subdomain you pick: <id>.goatcounter.com
+ *   'plausible'    — paid (~€9/mo), the nicest dashboard of the three. `id`
+ *                    is the domain you registered with them.
+ *
+ * Whichever you choose, it's one script, loaded with `defer`, and it never
+ * blocks the page.
+ */
+export const analytics = {
+  provider: 'none' as 'none' | 'cloudflare' | 'goatcounter' | 'plausible',
+  /** Cloudflare beacon token, GoatCounter subdomain, or Plausible domain. */
+  id: '',
+};
+
 /* ── The hero paragraph ──────────────────────────────────────────────────── */
 
 /**

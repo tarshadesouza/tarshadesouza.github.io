@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { site, social, experience } from '../data/profile';
+import { site, social, experience, analytics } from '../data/profile';
 import { isTodo } from '../lib/content';
 
 interface Props {
@@ -37,6 +37,18 @@ const personSchema = {
   jobTitle: site.role,
   description: pageDescription,
   sameAs: profiles,
+  image: new URL('/og.png', Astro.site ?? site.url).href,
+  // Checked directly: isTodo()'s type guard narrows an already-string value to
+  // `never` in the negative branch.
+  ...(!site.location.startsWith('TODO')
+    ? {
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: site.location.split(',')[0].trim(),
+          addressCountry: site.location.split(',').pop()!.trim(),
+        },
+      }
+    : {}),
   ...(currentEmployer ? { worksFor: { '@type': 'Organization', name: currentEmployer } } : {}),
   knowsAbout: [
     'Software Engineering',
@@ -68,20 +80,41 @@ const personSchema = {
     <meta property="og:description" content={pageDescription} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={`${site.name} — ${site.role}`} />
+    <meta property="og:locale" content="en_GB" />
     <meta property="og:site_name" content={site.name} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={pageDescription} />
     <meta name="twitter:image" content={ogImage} />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500&display=swap"
-    />
-
     <script is:inline set:html={JSON.stringify(personSchema)} type="application/ld+json" />
+
+    {/*
+      Analytics. Cookieless by design, so no consent banner is needed, and
+      nothing at all is loaded until a provider is configured in profile.ts.
+    */}
+    {analytics.provider === 'cloudflare' && analytics.id && (
+      <script
+        is:inline
+        defer
+        src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon={`{"token": "${analytics.id}"}`}
+      />
+    )}
+    {analytics.provider === 'goatcounter' && analytics.id && (
+      <script
+        is:inline
+        defer
+        data-goatcounter={`https://${analytics.id}.goatcounter.com/count`}
+        src="https://gc.zgo.at/count.js"
+      />
+    )}
+    {analytics.provider === 'plausible' && analytics.id && (
+      <script is:inline defer data-domain={analytics.id} src="https://plausible.io/js/script.js" />
+    )}
 
     {/*
       Set the theme before first paint so there is no flash of the wrong one.
