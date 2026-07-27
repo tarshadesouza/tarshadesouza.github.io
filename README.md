@@ -47,7 +47,7 @@ Other commands:
 ```bash
 npm run sync       # refresh the GitHub + Medium data only
 npm run build      # sync, then build to dist/
-npm run test       # unit tests for the RSS parser
+npm run test       # RSS parser + GraphQL introspection queries
 npm run check      # Astro + TypeScript diagnostics
 npm run og         # regenerate public/og.png (the social share card)
 ```

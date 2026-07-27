@@ -37,6 +37,14 @@ import { createSign } from 'node:crypto';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  schemaRootQuery,
+  typeFieldsQuery,
+  fieldArgsQuery,
+  inputFieldsQuery,
+  named,
+} from './lib/introspection.mjs';
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DRY_RUN = process.argv.includes('--dry-run');
 
@@ -583,15 +591,6 @@ async function send(subject, html, text) {
  * them. Run it from the Actions tab and paste the output.
  */
 async function introspect() {
-  /** Unwrap NonNull/List wrappers down to the named type inside. */
-  const named = (type) => {
-    let t = type;
-    while (t && !t.name) t = t.ofType;
-    return t?.name ?? null;
-  };
-
-  const TYPE_REF = 'type { name kind ofType { name kind ofType { name kind ofType { name } } } }';
-
   /**
    * A type that doesn't exist comes back as `null`, not as an error. Treating
    * that as "no fields" is how the first attempt at this reported an empty
@@ -599,7 +598,7 @@ async function introspect() {
    * type name. Fail loudly instead.
    */
   const fieldsOf = async (typeName) => {
-    const data = await cloudflareQueryRaw(`{ __type(name: ${q(typeName)}) { ${TYPE_REF} fields { name ${TYPE_REF} } } }`);
+    const data = await cloudflareQueryRaw(typeFieldsQuery(typeName));
     if (!data?.__type) throw new Error(`the schema has no type named "${typeName}"`);
     return data.__type.fields ?? [];
   };
@@ -621,7 +620,7 @@ async function introspect() {
 
   // Walk down from the root instead of guessing type names. Every name below
   // comes from the server, so this cannot be wrong about what things are called.
-  const root = await cloudflareQueryRaw('{ __schema { queryType { name } } }');
+  const root = await cloudflareQueryRaw(schemaRootQuery());
   const queryType = root?.__schema?.queryType?.name;
   if (!queryType) throw new Error('introspection is disabled on this endpoint');
   console.log(`\nroot query type: ${queryType}`);
@@ -667,17 +666,13 @@ async function introspect() {
 
   // The filter's input type is the other thing worth knowing: its fields are
   // exactly the filter keys the dataset accepts.
-  const arg = await cloudflareQueryRaw(
-    `{ __type(name: ${q(accountType)}) { fields { name args { name type { name kind ofType { name kind ofType { name } } } } } } }`,
-  );
+  const arg = await cloudflareQueryRaw(fieldArgsQuery(accountType));
   const filterArg = (arg?.__type?.fields ?? [])
     .find((f) => f.name === chosen.name)
     ?.args?.find((a) => a.name === 'filter');
   if (filterArg) {
     const filterType = named(filterArg.type);
-    const input = await cloudflareQueryRaw(
-      `{ __type(name: ${q(filterType)}) { inputFields { name } } }`,
-    );
+    const input = await cloudflareQueryRaw(inputFieldsQuery(filterType));
     const keys = (input?.__type?.inputFields ?? []).map((f) => f.name);
     console.log(`\n  filter (${filterType}) — ${keys.length} keys:`);
     console.log('    ' + keys.join(', '));
