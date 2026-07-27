@@ -583,48 +583,104 @@ async function send(subject, html, text) {
  * them. Run it from the Actions tab and paste the output.
  */
 async function introspect() {
+  /** Unwrap NonNull/List wrappers down to the named type inside. */
   const named = (type) => {
     let t = type;
     while (t && !t.name) t = t.ofType;
-    return t?.name ?? '(unnamed)';
+    return t?.name ?? null;
+  };
+
+  const TYPE_REF = 'type { name kind ofType { name kind ofType { name kind ofType { name } } } }';
+
+  /**
+   * A type that doesn't exist comes back as `null`, not as an error. Treating
+   * that as "no fields" is how the first attempt at this reported an empty
+   * `Account` type as a fact about the account rather than a wrong guess at a
+   * type name. Fail loudly instead.
+   */
+  const fieldsOf = async (typeName) => {
+    const data = await cloudflareQueryRaw(`{ __type(name: ${q(typeName)}) { ${TYPE_REF} fields { name ${TYPE_REF} } } }`);
+    if (!data?.__type) throw new Error(`the schema has no type named "${typeName}"`);
+    return data.__type.fields ?? [];
+  };
+
+  /** Follow a field by name and return the type it resolves to. */
+  const descend = (fields, name, where) => {
+    const field = fields.find((f) => f.name === name);
+    if (!field) {
+      throw new Error(
+        `no "${name}" field on ${where} — available: ${fields.map((f) => f.name).join(', ') || '(none)'}`,
+      );
+    }
+    const type = named(field.type);
+    if (!type) throw new Error(`"${name}" on ${where} has no named type`);
+    return type;
   };
 
   console.log('Cloudflare GraphQL schema\n' + '='.repeat(46));
 
-  const account = await cloudflareQueryRaw(
-    '{ __type(name: "Account") { fields { name type { name kind ofType { name kind ofType { name } } } } } }',
-  );
-  const fields = account?.__type?.fields ?? [];
-  const rum = fields.filter((f) => /rum/i.test(f.name));
+  // Walk down from the root instead of guessing type names. Every name below
+  // comes from the server, so this cannot be wrong about what things are called.
+  const root = await cloudflareQueryRaw('{ __schema { queryType { name } } }');
+  const queryType = root?.__schema?.queryType?.name;
+  if (!queryType) throw new Error('introspection is disabled on this endpoint');
+  console.log(`\nroot query type: ${queryType}`);
 
-  console.log(`\nAccount fields mentioning RUM (${rum.length} of ${fields.length} total):`);
+  const viewerType = descend(await fieldsOf(queryType), 'viewer', queryType);
+  console.log(`viewer: ${viewerType}`);
+
+  const viewerFields = await fieldsOf(viewerType);
+  const accountType = descend(viewerFields, 'accounts', viewerType);
+  console.log(`accounts: ${accountType}`);
+
+  const accountFields = await fieldsOf(accountType);
+  const rum = accountFields.filter((f) => /rum/i.test(f.name));
+
+  console.log(`\n${accountType} exposes ${accountFields.length} datasets, ${rum.length} matching /rum/i:`);
   rum.forEach((f) => console.log(`  ${f.name}  →  ${named(f.type)}`));
 
   if (!rum.length) {
-    console.log('  none — this account may not expose Web Analytics over GraphQL');
+    // Print the lot. Either Web Analytics is named something unexpected here,
+    // or the token's permissions are hiding it — and the full list tells us
+    // which, where a bare "none" told us nothing.
+    console.log('  none. Every dataset on this account:');
+    console.log('    ' + accountFields.map((f) => f.name).join(', '));
     return;
   }
 
-  // Walk into the dataset we intend to use, or the first RUM one available.
   const chosen = rum.find((f) => f.name === 'rumPageloadEventsAdaptiveGroups') ?? rum[0];
   const groupType = named(chosen.type);
   console.log(`\nInspecting ${chosen.name} (${groupType})`);
 
-  const group = await cloudflareQueryRaw(
-    `{ __type(name: ${q(groupType)}) { fields { name type { name kind ofType { name kind ofType { name } } } } } }`,
-  );
-  const groupFields = group?.__type?.fields ?? [];
+  const groupFields = await fieldsOf(groupType);
   console.log('  metrics / selections:');
-  groupFields.forEach((f) => console.log(`    ${f.name}  →  ${named(f.type)}`));
+  groupFields.forEach((f) => console.log(`    ${f.name}  →  ${named(f.type) ?? '(scalar)'}`));
 
-  for (const wanted of ['dimensions', 'sum']) {
+  for (const wanted of ['dimensions', 'sum', 'avg']) {
     const field = groupFields.find((f) => f.name === wanted);
     if (!field) continue;
     const typeName = named(field.type);
-    const sub = await cloudflareQueryRaw(`{ __type(name: ${q(typeName)}) { fields { name } } }`);
-    const names = (sub?.__type?.fields ?? []).map((f) => f.name);
+    const names = (await fieldsOf(typeName)).map((f) => f.name);
     console.log(`\n  ${wanted} (${typeName}) — ${names.length} available:`);
     console.log('    ' + names.join(', '));
+  }
+
+  // The filter's input type is the other thing worth knowing: its fields are
+  // exactly the filter keys the dataset accepts.
+  const arg = await cloudflareQueryRaw(
+    `{ __type(name: ${q(accountType)}) { fields { name args { name type { name kind ofType { name kind ofType { name } } } } } } }`,
+  );
+  const filterArg = (arg?.__type?.fields ?? [])
+    .find((f) => f.name === chosen.name)
+    ?.args?.find((a) => a.name === 'filter');
+  if (filterArg) {
+    const filterType = named(filterArg.type);
+    const input = await cloudflareQueryRaw(
+      `{ __type(name: ${q(filterType)}) { inputFields { name } } }`,
+    );
+    const keys = (input?.__type?.inputFields ?? []).map((f) => f.name);
+    console.log(`\n  filter (${filterType}) — ${keys.length} keys:`);
+    console.log('    ' + keys.join(', '));
   }
 }
 
@@ -648,11 +704,17 @@ if (process.argv.includes('--introspect')) {
     console.error('CLOUDFLARE_API_TOKEN is not set');
     process.exit(1);
   }
-  await introspect().catch((error) => {
+  try {
+    await introspect();
+  } catch (error) {
     console.error(`introspection failed: ${error.message}`);
-    process.exit(1);
-  });
-  process.exit(0);
+    if (!DRY_RUN) process.exit(1);
+  }
+
+  // Tick dry run as well and the report follows, so a single run answers both
+  // "what does the schema offer" and "does the query we send actually work".
+  if (!DRY_RUN) process.exit(0);
+  console.log('\n' + '='.repeat(46) + '\n');
 }
 
 /* ── Run ─────────────────────────────────────────────────────────────────── */
