@@ -76,6 +76,34 @@ const problems = [];
 
 /* ── Cloudflare Web Analytics ────────────────────────────────────────────── */
 
+/**
+ * "Authentication error" from Cloudflare is ambiguous — it covers a bad token,
+ * a token without the right permission, and the wrong account. Ask the token
+ * verify endpoint which it is, so the log says what to actually change.
+ */
+async function explainCloudflareAuth() {
+  try {
+    const res = await fetch('https://api.cloudflare.com/client/v4/user/tokens/verify', {
+      headers: { authorization: `Bearer ${CLOUDFLARE_API_TOKEN}` },
+    });
+    const body = await res.json();
+
+    if (res.ok && body.success) {
+      return (
+        'the token itself is valid, so it is missing the permission or pointing at the wrong ' +
+        'account — it needs Account · Account Analytics · Read, and CLOUDFLARE_ACCOUNT_ID must ' +
+        'be the account that owns the Web Analytics site'
+      );
+    }
+    return (
+      'the token was rejected outright. If you pasted a Global API Key, that will not work here ' +
+      '— create an API *token* (My Profile → API Tokens → Create Token → Custom)'
+    );
+  } catch {
+    return 'could not reach the token verify endpoint to say why';
+  }
+}
+
 async function cloudflareQuery(query, variables) {
   const res = await fetch('https://api.cloudflare.com/client/v4/graphql', {
     method: 'POST',
@@ -87,8 +115,12 @@ async function cloudflareQuery(query, variables) {
   });
 
   const body = await res.json();
-  if (!res.ok) throw new Error(`Cloudflare HTTP ${res.status}`);
-  if (body.errors?.length) throw new Error(body.errors.map((e) => e.message).join('; '));
+  if (!res.ok) throw new Error(`GraphQL HTTP ${res.status}`);
+  if (body.errors?.length) {
+    throw new Error(
+      body.errors.map((e) => `${e.message}${e.extensions?.code ? ` [${e.extensions.code}]` : ''}`).join('; '),
+    );
+  }
   return body.data?.viewer?.accounts?.[0] ?? {};
 }
 
@@ -108,7 +140,10 @@ async function resolveSiteTag() {
   );
   const body = await res.json();
   if (!res.ok || !body.success) {
-    throw new Error(body.errors?.[0]?.message ?? `site list HTTP ${res.status}`);
+    const first = body.errors?.[0];
+    throw new Error(
+      `site list: ${first?.message ?? `HTTP ${res.status}`}${first?.code ? ` [code ${first.code}]` : ''}`,
+    );
   }
 
   const sites = body.result ?? [];
@@ -217,7 +252,8 @@ async function collectCloudflare() {
 
     return { current, prior, tables };
   } catch (error) {
-    problems.push(`Cloudflare unavailable: ${error.message}`);
+    const why = /auth/i.test(error.message) ? ` — ${await explainCloudflareAuth()}` : '';
+    problems.push(`Cloudflare unavailable: ${error.message}${why}`);
     return null;
   }
 }
