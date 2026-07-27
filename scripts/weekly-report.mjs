@@ -139,8 +139,13 @@ async function cloudflareQuery(query) {
     body: JSON.stringify({ query }),
   });
 
-  const body = await res.json();
-  if (!res.ok) throw new Error(`GraphQL HTTP ${res.status}`);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    // A 403 here carries its reason in the body; losing it leaves you staring
+    // at a status code.
+    const first = body.errors?.[0];
+    throw new Error(`GraphQL HTTP ${res.status}${first?.message ? ` — ${first.message}` : ''}`);
+  }
   if (body.errors?.length) {
     throw new Error(
       body.errors.map((e) => `${e.message}${e.extensions?.code ? ` [${e.extensions.code}]` : ''}`).join('; '),
@@ -220,8 +225,14 @@ async function cloudflareTotals(start, end) {
     data = await cloudflareQuery(build('count\n          sum { visits }'));
   } catch (error) {
     // `visits` isn't present on every dataset version. Page views alone still
-    // makes a useful headline, so degrade rather than lose the whole section.
-    problems.push(`Cloudflare visit counts unavailable (${error.message}); reporting page views only`);
+    // makes a useful headline, so degrade rather than lose the whole section —
+    // but only for that specific complaint. Anything else (auth, a bad site
+    // tag) would fail the retry too, and reporting it as a missing metric
+    // would send you looking in the wrong place.
+    if (!/visits|sum/i.test(error.message)) throw error;
+    problems.push(
+      `Cloudflare visit counts unavailable (${error.message}); reporting page views only`,
+    );
     data = await cloudflareQuery(build('count'));
   }
 
@@ -561,6 +572,87 @@ async function send(subject, html, text) {
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(body.message || `Resend HTTP ${res.status}`);
   return body.id;
+}
+
+/* ── Schema introspection ────────────────────────────────────────────────── */
+
+/**
+ * `--introspect` asks Cloudflare's GraphQL API what it actually offers, and
+ * prints it. Cloudflare's analytics schema varies by account and plan, and
+ * their docs lag it, so this replaces guessing at field names with reading
+ * them. Run it from the Actions tab and paste the output.
+ */
+async function introspect() {
+  const named = (type) => {
+    let t = type;
+    while (t && !t.name) t = t.ofType;
+    return t?.name ?? '(unnamed)';
+  };
+
+  console.log('Cloudflare GraphQL schema\n' + '='.repeat(46));
+
+  const account = await cloudflareQueryRaw(
+    '{ __type(name: "Account") { fields { name type { name kind ofType { name kind ofType { name } } } } } }',
+  );
+  const fields = account?.__type?.fields ?? [];
+  const rum = fields.filter((f) => /rum/i.test(f.name));
+
+  console.log(`\nAccount fields mentioning RUM (${rum.length} of ${fields.length} total):`);
+  rum.forEach((f) => console.log(`  ${f.name}  →  ${named(f.type)}`));
+
+  if (!rum.length) {
+    console.log('  none — this account may not expose Web Analytics over GraphQL');
+    return;
+  }
+
+  // Walk into the dataset we intend to use, or the first RUM one available.
+  const chosen = rum.find((f) => f.name === 'rumPageloadEventsAdaptiveGroups') ?? rum[0];
+  const groupType = named(chosen.type);
+  console.log(`\nInspecting ${chosen.name} (${groupType})`);
+
+  const group = await cloudflareQueryRaw(
+    `{ __type(name: ${q(groupType)}) { fields { name type { name kind ofType { name kind ofType { name } } } } } }`,
+  );
+  const groupFields = group?.__type?.fields ?? [];
+  console.log('  metrics / selections:');
+  groupFields.forEach((f) => console.log(`    ${f.name}  →  ${named(f.type)}`));
+
+  for (const wanted of ['dimensions', 'sum']) {
+    const field = groupFields.find((f) => f.name === wanted);
+    if (!field) continue;
+    const typeName = named(field.type);
+    const sub = await cloudflareQueryRaw(`{ __type(name: ${q(typeName)}) { fields { name } } }`);
+    const names = (sub?.__type?.fields ?? []).map((f) => f.name);
+    console.log(`\n  ${wanted} (${typeName}) — ${names.length} available:`);
+    console.log('    ' + names.join(', '));
+  }
+}
+
+/** Introspection needs the raw data envelope, not viewer.accounts[0]. */
+async function cloudflareQueryRaw(query) {
+  const res = await fetch('https://api.cloudflare.com/client/v4/graphql', {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({ query }),
+  });
+  const body = await res.json();
+  if (body.errors?.length) throw new Error(body.errors.map((e) => e.message).join('; '));
+  return body.data;
+}
+
+if (process.argv.includes('--introspect')) {
+  if (!CLOUDFLARE_API_TOKEN) {
+    console.error('CLOUDFLARE_API_TOKEN is not set');
+    process.exit(1);
+  }
+  await introspect().catch((error) => {
+    console.error(`introspection failed: ${error.message}`);
+    process.exit(1);
+  });
+  process.exit(0);
 }
 
 /* ── Run ─────────────────────────────────────────────────────────────────── */
