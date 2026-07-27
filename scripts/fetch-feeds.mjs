@@ -408,4 +408,10 @@ console.log(`  graph       ${github.contributions ? `${github.contributions.tota
 const todos = [...profileSource.matchAll(/TODO\(\s*\n?\s*['"]([^'"]+)/g)].length +
   [...profileSource.matchAll(/'TODO: [^']+'/g)].length;
 if (todos) console.log(`\n  ⚠ ${todos} placeholder${todos === 1 ? '' : 's'} still to fill in src/data/profile.ts`);
+
+const provider = profileSource.match(/provider:\s*'(\w+)' as/)?.[1];
+const analyticsId = profileSource.match(/id:\s*'([^']*)',\n\};\n\n\/\*\*\n \* Search engine/)?.[1];
+if (provider && provider !== 'none' && !analyticsId) {
+  console.log(`  ⚠ analytics set to ${provider} but no id — nothing is being recorded yet`);
+}
 console.log(degraded ? '\n  finished with warnings\n' : '\n  done\n');

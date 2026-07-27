@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { site, social, experience, analytics } from '../data/profile';
+import { site, social, experience, analytics, verification } from '../data/profile';
 import { isTodo } from '../lib/content';
 
 interface Props {
@@ -72,6 +72,10 @@ const personSchema = {
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta name="author" content={site.name} />
+    {verification.google && (
+      <meta name="google-site-verification" content={verification.google} />
+    )}
+    {verification.bing && <meta name="msvalidate.01" content={verification.bing} />}
     <meta name="theme-color" content="#08090c" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#faf8f6" media="(prefers-color-scheme: light)" />
 

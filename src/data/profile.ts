@@ -76,9 +76,25 @@ export const social = {
  * blocks the page.
  */
 export const analytics = {
-  provider: 'none' as 'none' | 'cloudflare' | 'goatcounter' | 'plausible',
-  /** Cloudflare beacon token, GoatCounter subdomain, or Plausible domain. */
+  provider: 'cloudflare' as 'none' | 'cloudflare' | 'goatcounter' | 'plausible',
+  /**
+   * Cloudflare beacon token, GoatCounter subdomain, or Plausible domain.
+   * Nothing loads while this is empty, so the site stays script-free until
+   * you paste the token in. `npm run build` warns if it's still blank.
+   */
   id: '',
+};
+
+/**
+ * Search engine ownership proofs. Paste the code the tool gives you — it
+ * renders as a meta tag, which is the verification method that survives a
+ * redeploy (an uploaded HTML file would be wiped by the next build).
+ */
+export const verification = {
+  /** Search Console → Add property → URL prefix → HTML tag. */
+  google: '',
+  /** Bing Webmaster Tools, if you bother — it also feeds DuckDuckGo. */
+  bing: '',
 };
 
 /* ── The hero paragraph ──────────────────────────────────────────────────── */
