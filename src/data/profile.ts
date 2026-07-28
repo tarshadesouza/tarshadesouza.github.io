@@ -483,36 +483,36 @@ export const mentoring = {
  */
 export const reading = {
   intro:
-    'Reading is what I do with most of my spare time. Non-fiction, memoir and novels in roughly equal measure, and only a little of it about software.',
+    'Reading is a big part of my life — most of my spare time goes on it. Non-fiction, memoir and novels in roughly equal measure, and only a little of it about software.',
   books: [
     {
       title: 'The Pragmatic Programmer',
       author: 'Andrew Hunt & David Thomas',
       subject: 'Engineering',
-      note: '',
+      note: '', shelf: 'non-fiction' as const,
     },
-    { title: 'Atomic Habits', author: 'James Clear', subject: 'Behaviour', note: '' },
-    { title: 'Flow', author: 'Mihaly Csikszentmihalyi', subject: 'Psychology', note: '' },
-    { title: 'Contagious', author: 'Jonah Berger', subject: 'Behaviour', note: '' },
-    { title: 'Lean In', author: 'Sheryl Sandberg', subject: 'Work', note: '' },
+    { title: 'Atomic Habits', author: 'James Clear', subject: 'Behaviour', note: '', shelf: 'non-fiction' as const },
+    { title: 'Flow', author: 'Mihaly Csikszentmihalyi', subject: 'Psychology', note: '', shelf: 'non-fiction' as const },
+    { title: 'Contagious', author: 'Jonah Berger', subject: 'Behaviour', note: '', shelf: 'non-fiction' as const },
+    { title: 'Lean In', author: 'Sheryl Sandberg', subject: 'Work', note: '', shelf: 'non-fiction' as const },
     {
       title: 'Brief Answers to the Big Questions',
       author: 'Stephen Hawking',
       subject: 'Science',
-      note: '',
+      note: '', shelf: 'non-fiction' as const,
     },
     {
       title: 'Different Kinds of Minds',
       author: 'Temple Grandin',
       subject: 'Science',
-      note: '',
+      note: '', shelf: 'non-fiction' as const,
     },
-    { title: 'Outliers', author: 'Malcolm Gladwell', subject: 'Behaviour', note: '' },
+    { title: 'Outliers', author: 'Malcolm Gladwell', subject: 'Behaviour', note: '', shelf: 'non-fiction' as const },
     {
       title: 'Algorithms to Live By',
       author: 'Brian Christian & Tom Griffiths',
       subject: 'Science',
-      note: '',
+      note: '', shelf: 'non-fiction' as const,
     },
     // Fiction, memoir and essays.
     {
@@ -520,20 +520,20 @@ export const reading = {
       title: 'My Family and Other Animals',
       author: 'Gerald Durrell',
       subject: 'Memoir',
-      note: '',
+      note: '', shelf: 'non-fiction' as const,
     },
     {
       title: 'All Creatures Great and Small',
       author: 'James Herriot',
       subject: 'Memoir',
-      note: '',
+      note: '', shelf: 'non-fiction' as const,
     },
-    { title: 'A Walk in the Woods', author: 'Bill Bryson', subject: 'Travel', note: '' },
-    { title: 'Calypso', author: 'David Sedaris', subject: 'Essays', note: '' },
-    { title: 'Heartburn', author: 'Nora Ephron', subject: 'Fiction', note: '' },
-    { title: 'Auntie Mame', author: 'Patrick Dennis', subject: 'Fiction', note: '' },
-    { title: '1984', author: 'George Orwell', subject: 'Classic', note: '' },
-    { title: 'The Picture of Dorian Gray', author: 'Oscar Wilde', subject: 'Classic', note: '' },
+    { title: 'A Walk in the Woods', author: 'Bill Bryson', subject: 'Travel', note: '', shelf: 'non-fiction' as const },
+    { title: 'Calypso', author: 'David Sedaris', subject: 'Essays', note: '', shelf: 'non-fiction' as const },
+    { title: 'Heartburn', author: 'Nora Ephron', subject: 'Fiction', note: '', shelf: 'fiction' as const },
+    { title: 'Auntie Mame', author: 'Patrick Dennis', subject: 'Fiction', note: '', shelf: 'fiction' as const },
+    { title: '1984', author: 'George Orwell', subject: 'Classic', note: '', shelf: 'fiction' as const },
+    { title: 'The Picture of Dorian Gray', author: 'Oscar Wilde', subject: 'Classic', note: '', shelf: 'fiction' as const },
   ],
 };
 

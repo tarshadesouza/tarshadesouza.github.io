@@ -172,6 +172,37 @@ function initTalkFilter() {
   });
 }
 
+/* ── Reading shelf ───────────────────────────────────────────────────────── */
+
+/**
+ * Non-fiction / fiction / everything, defaulting to non-fiction.
+ *
+ * The markup ships every book, so with JavaScript off the whole shelf is
+ * readable rather than three-quarters of it being invisible. Narrowing to the
+ * default is the script's first act.
+ *
+ * A book revealed by switching tabs gets `is-in` applied directly: it was
+ * hidden when the reveal observer first ran, so waiting on an intersection
+ * would leave it at opacity 0 until the next scroll.
+ */
+function initShelfFilter() {
+  const tabs = document.querySelectorAll<HTMLButtonElement>('.shelf-tab');
+  const books = document.querySelectorAll<HTMLElement>('.book[data-shelf]');
+  if (!tabs.length || !books.length) return;
+
+  const apply = (shelf: string) => {
+    tabs.forEach((tab) => tab.setAttribute('aria-selected', String(tab.dataset.shelf === shelf)));
+    books.forEach((book) => {
+      const show = shelf === 'all' || book.dataset.shelf === shelf;
+      book.hidden = !show;
+      if (show) book.classList.add('is-in');
+    });
+  };
+
+  tabs.forEach((tab) => tab.addEventListener('click', () => apply(tab.dataset.shelf ?? 'all')));
+  apply('non-fiction');
+}
+
 /* ── Case-study clips ────────────────────────────────────────────────────── */
 
 /**
@@ -440,6 +471,7 @@ initScrollEffects();
 initCardGlow();
 initCounters();
 initTalkFilter();
+initShelfFilter();
 initLightbox();
 initClips();
 initCV();

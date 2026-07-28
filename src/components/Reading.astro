@@ -36,11 +36,28 @@ const thumbnails = covers as Record<string, string>;
 {
   reading.books.length > 0 && (
     <Section id="reading" index="07 / Reading" title="On the shelf" note={reading.intro}>
+      {/*
+        Defaults to non-fiction. Every book ships in the markup and the script
+        hides the others on load, so with JavaScript off the whole shelf is
+        there rather than three-quarters of it being invisible.
+      */}
+      <div class="shelf-tabs" role="tablist" aria-label="Filter books">
+        <button class="shelf-tab" role="tab" data-shelf="non-fiction" aria-selected="true">
+          Non-fiction
+        </button>
+        <button class="shelf-tab" role="tab" data-shelf="fiction" aria-selected="false">
+          Fiction
+        </button>
+        <button class="shelf-tab" role="tab" data-shelf="all" aria-selected="false">
+          Everything
+        </button>
+      </div>
+
       <ul class="shelf" data-stagger="60">
         {reading.books.map((book) => {
           const cover = thumbnails[slugify(book.title)];
           return (
-            <li class="book" data-reveal style={`--hue:${hue(book.title)}`}>
+            <li class="book" data-reveal data-shelf={book.shelf} style={`--hue:${hue(book.title)}`}>
               <article class:list={['book-face', cover && 'has-cover']}>
                 <span class="book-spine" aria-hidden="true" />
                 {cover && (

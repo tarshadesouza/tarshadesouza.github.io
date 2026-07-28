@@ -844,7 +844,8 @@ p {
   max-width: 56ch;
 }
 
-.scope-tabs {
+.scope-tabs,
+.shelf-tabs {
   display: inline-flex;
   gap: 0.25rem;
   padding: 0.25rem;
@@ -853,7 +854,8 @@ p {
   margin-bottom: 2rem;
 }
 
-.scope-tab {
+.scope-tab,
+.shelf-tab {
   padding: 0.35rem 0.95rem;
   border-radius: 999px;
   font-size: var(--step--1);
@@ -861,7 +863,8 @@ p {
   transition: color 0.3s, background-color 0.4s var(--ease-out);
 }
 
-.scope-tab[aria-selected='true'] {
+.scope-tab[aria-selected='true'],
+.shelf-tab[aria-selected='true'] {
   background: var(--accent-soft);
   color: var(--fg);
 }
