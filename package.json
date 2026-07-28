@@ -14,7 +14,8 @@
     "test": "node --test \"scripts/lib/*.test.mjs\"",
     "og": "node scripts/og-image.mjs",
     "report": "node scripts/weekly-report.mjs --dry-run",
-    "covers": "node scripts/fetch-covers.mjs"
+    "covers": "node scripts/fetch-covers.mjs",
+    "icons": "node scripts/icons.mjs"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",

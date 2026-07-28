@@ -78,6 +78,9 @@ const personSchema = {
     <meta name="description" content={pageDescription} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    {/* iOS ignores SVG favicons and needs a raster one. `npm run icons`
+        regenerates these from favicon.svg. */}
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="author" content={site.name} />
     {verification.google && (
       <meta name="google-site-verification" content={verification.google} />

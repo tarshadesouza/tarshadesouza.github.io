@@ -332,6 +332,12 @@ p {
   gap: 0.6rem;
 }
 
+.nav-glyph {
+  height: 1.15rem;
+  width: auto;
+  display: block;
+}
+
 .nav-mark .dot {
   width: 0.45rem;
   height: 0.45rem;

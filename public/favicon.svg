@@ -1,5 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#08090c" />
-  <circle cx="32" cy="32" r="17" fill="none" stroke="#ff704d" stroke-width="3" />
-  <circle cx="32" cy="32" r="6" fill="#ff704d" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Tarsha de Souza">
+  <!--
+    An italic serif T. The hero sets "Tarsha" upright and "de Souza" italic in
+    the accent colour; the slant is the part that belongs to her, so the mark
+    is built from it rather than from a generic letterform.
+
+    Drawn as rectangles rather than as font glyphs: a favicon renders at 16px
+    in browser chrome that has never heard of Instrument Serif, so the shape
+    has to carry itself. Slab serifs also survive that size better than
+    bracketed ones, which turn to mush. Proportions were chosen by rendering
+    four candidates at 16, 24, 32 and 64 and comparing them on both a light
+    and a dark background.
+  -->
+  <rect width="64" height="64" rx="14" fill="#0e1015" />
+  <g fill="#ff704d" transform="translate(6.5 0) skewX(-11)">
+    <rect x="12" y="15" width="40" height="5.5" />
+    <rect x="12" y="15" width="4" height="8" />
+    <rect x="48" y="15" width="4" height="8" />
+    <rect x="29.5" y="15" width="5" height="31" />
+    <rect x="24" y="41" width="16" height="5" />
+  </g>
 </svg>

@@ -12,18 +12,26 @@ const links = [
   { href: '#reading', label: 'Reading' },
 ];
 
-const initials = site.name
-  .split(' ')
-  .map((part) => part[0])
-  .join('')
-  .slice(0, 2);
 ---
 
 <nav class="nav" aria-label="Primary">
   <div class="shell nav-inner">
     <a class="nav-mark" href="#top" aria-label={`${site.name} — back to top`}>
       <span class="dot" aria-hidden="true"></span>
-      {initials}
+      {/*
+        The same italic serif T as the favicon, without its tile. Inline rather
+        than an <img> so it takes the accent colour from the theme and costs no
+        extra request. Cropped to the letterform.
+      */}
+      <svg class="nav-glyph" viewBox="9 13 51 35" aria-hidden="true" focusable="false">
+        <g fill="var(--accent)" transform="translate(6.5 0) skewX(-11)">
+          <rect x="12" y="15" width="40" height="5.5" />
+          <rect x="12" y="15" width="4" height="8" />
+          <rect x="48" y="15" width="4" height="8" />
+          <rect x="29.5" y="15" width="5" height="31" />
+          <rect x="24" y="41" width="16" height="5" />
+        </g>
+      </svg>
     </a>
 
     <div class="nav-links">
