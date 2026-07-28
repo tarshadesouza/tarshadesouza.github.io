@@ -10,15 +10,26 @@ import { posts, isTodo, monthYear } from '../lib/content';
 
 const handle = social.medium && !isTodo(social.medium) ? social.medium : null;
 const profileUrl = handle ? `https://medium.com/${handle}` : null;
+
+/**
+ * A section headed "Latest posts" that says there aren't any reads worse than
+ * no section at all, so in a published build it simply doesn't render. The
+ * committed fallback feed is empty, so this is what a failed fetch during a
+ * build would otherwise ship.
+ *
+ * In dev the empty state still shows, otherwise the section would vanish with
+ * no explanation of why.
+ */
+const visible = handle && (posts.length > 0 || import.meta.env.DEV);
 ---
 
 {
-  handle && (
+  visible && (
     <Section
       id="writing"
       index="03 / Writing"
       title="Latest posts"
-      note="Straight from Medium. Publish there, and it shows up here."
+      note="Notes on what I’m building, published on Medium."
     >
       {posts.length > 0 ? (
         <div data-stagger="80">

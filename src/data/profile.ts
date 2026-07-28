@@ -210,12 +210,13 @@ export const internalWork: {
   {
     name: 'App Intents with live data',
     org: 'Expedia Group',
-    role: 'iOS',
-    summary: 'A hackathon win that shipped, and is still in the app.',
+    role: 'Senior Software Engineer',
+    summary: 'Built in a hackathon, shipped to production, still running two years later.',
     blurb:
       'Expedia’s core journeys surfaced as App Intents, so a traveller can start a search from Spotlight or Siri without opening the app first — backed by live data rather than static shortcuts.',
     points: [
-      'Won the company hackathon, then carried it through to production rather than leaving it as a demo.',
+      'Five days, built straight onto the production codebase rather than a demo target.',
+      'Most of that time went on integration: routing each intent through to the right destination across points of sale — search, trips, and the rest of a large app.',
       '130,000+ events between 25 September and 7 October 2024.',
       '120,000 of those came from the lodging intent alone.',
       'Still shipping in the Expedia app today.',
