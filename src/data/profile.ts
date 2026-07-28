@@ -120,7 +120,7 @@ export const verification = {
 export const intro = [
   'Seven years a software engineer, primarily iOS, branching out wherever there’s been room — a six-month rotation on Expedia’s marketing ML team, open source in my own time. I like to build and fix things, I like work with room to be creative, and most of all I like learning something I didn’t know.',
   // Inline links use [label](url) — see inlineLinks() in src/lib/content.ts.
-  'My two most recent builds are open source. [CyclOps](https://tarshadesouza.github.io/cyclops/) reads a failing CI build, explains it in plain language, and fixes it with a coding agent that loops until the build is green. [AdoptAheadOS](https://tarshadesouza.github.io/AdoptAheadOS/) is earlier — an agent aimed at the yearly OS-adoption work, so Apple’s cut-off stops being an emergency.',
+  'My two most recent builds are open source. [CyclOps](https://tarshadesouza.github.io/cyclops/) reads a failing CI build, explains it in plain language, and fixes it with a coding agent that loops until the build is green. [AdoptAheadOS](https://tarshadesouza.github.io/AdoptAheadOS/) watches Apple’s developer news for SDK deadlines and API deprecations, then scans a Swift codebase in CI to flag what will break before the cut-off.',
 ];
 
 /* ── Projects ────────────────────────────────────────────────────────────── */
@@ -155,7 +155,7 @@ export const projects = [
     repo: 'tarshadesouza/AdoptAheadOS',
     featured: true,
     blurb:
-      'Adoption work is the first thing a roadmap pushes down, so teams find out they’re behind when Apple’s cut-off is already close. This is an early build aimed at putting an agent on that work, far enough ahead that the deadline stops being an emergency.',
+      'Adoption work is the first thing a roadmap pushes down, so teams find out they’re behind when Apple’s cut-off is already close. This monitors Apple Developer News, turns SDK requirements and API deprecations into structured rules, and scans a Swift codebase in CI to flag the files affected — while there’s still time to do something about it.',
     stack: [],
     links: [],
   },
