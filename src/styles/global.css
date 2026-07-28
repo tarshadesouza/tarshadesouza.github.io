@@ -515,6 +515,24 @@ p {
   margin-top: 1rem;
 }
 
+/*
+ * Links inside the lede. Underlined rather than colour-only, so they read as
+ * links without a second accent competing with the name above them.
+ */
+.lede-link {
+  color: var(--fg);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 1px;
+  transition: text-decoration-thickness var(--ease-fast, 160ms) ease;
+}
+
+.lede-link:hover,
+.lede-link:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
 .hero-actions {
   display: flex;
   flex-wrap: wrap;

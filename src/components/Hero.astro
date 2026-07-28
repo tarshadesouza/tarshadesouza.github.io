@@ -1,7 +1,7 @@
 ---
 import Dashboard from './Dashboard.astro';
 import { site, intro, social } from '../data/profile';
-import { isTodo } from '../lib/content';
+import { isTodo, inlineLinks } from '../lib/content';
 
 /** Split the name so the surname can carry the accent italic. */
 const [first, ...rest] = site.name.split(' ');
@@ -35,7 +35,15 @@ const surname = rest.join(' ');
     <div class="prose">
       {intro.map((paragraph, i) => (
         <p class="hero-lede" data-reveal style={`--reveal-delay:${340 + i * 90}ms`}>
-          {paragraph}
+          {inlineLinks(paragraph).map((part) =>
+            typeof part === 'string' ? (
+              part
+            ) : (
+              // Kept on one line: newlines here become whitespace inside the
+              // anchor, and the underline then runs past the word.
+              <a class="lede-link" href={part.href} target="_blank" rel="noopener">{part.label}</a>
+            ),
+          )}
         </p>
       ))}
     </div>

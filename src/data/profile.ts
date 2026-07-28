@@ -23,7 +23,12 @@ export const site = {
   name: 'Tarsha de Souza',
   /** Shown under your name in the hero, and as the SEO meta description. */
   role: 'Senior Software Engineer',
-  tagline: 'iOS at the core — and I go where the problem is.',
+  /**
+   * Optional line under the name. Currently empty on purpose: the role,
+   * location and opening paragraph already say this, and a fourth restatement
+   * was where the tone kept going wrong. Put a string here and it renders.
+   */
+  tagline: '',
   /**
    * The meta description recruiters and search engines see. Keep it under ~155
    * characters and lead with the words people actually search for.
@@ -109,8 +114,9 @@ export const verification = {
  * badges do that for you automatically).
  */
 export const intro = [
-  'Seven years of production engineering, with iOS at the core — I build the design-system platform that 23 Expedia Group brands ship on. I’m also the engineer teams borrow when the problem sits somewhere else: a stint on a marketing ML team fixing a production PySpark pipeline, multi-agent AI tooling, build systems, CI. An unfamiliar stack and someone else’s codebase is the part I like.',
-  'Right now I’m building CyclOps, an open-source GitHub App that reads failing CI, explains it in plain language, and fixes it with a coding agent that loops until the build is green.',
+  'Seven years a software engineer, primarily iOS, branching out wherever there’s been room — a six-month rotation on Expedia’s marketing ML team, open source in my own time. I like to build and fix things, I like work with room to be creative, and most of all I like learning something I didn’t know.',
+  // Inline links use [label](url) — see inlineLinks() in src/lib/content.ts.
+  'My two most recent builds are open source. [CyclOps](https://tarshadesouza.github.io/cyclops/) reads a failing CI build, explains it in plain language, and fixes it with a coding agent that loops until the build is green. [AdoptAheadOS](https://tarshadesouza.github.io/AdoptAheadOS/) is earlier — an agent aimed at the yearly OS-adoption work, so Apple’s cut-off stops being an emergency.',
 ];
 
 /* ── Projects ────────────────────────────────────────────────────────────── */
@@ -145,7 +151,7 @@ export const projects = [
     repo: 'tarshadesouza/AdoptAheadOS',
     featured: true,
     blurb:
-      'Apple’s deadlines don’t move. Every year brings a hard cut-off for building against the new OS, and adoption work is the first thing a roadmap pushes down — so teams find out they’re behind at the point where it’s already too late. AdoptAheadOS puts an agent on it, doing the bulk of the adoption work early enough that the cut-off stops being an emergency.',
+      'Apple’s deadlines don’t move. Every year brings a hard cut-off for building against the new OS, and adoption work is the first thing a roadmap pushes down — so teams find out they’re behind at the point where it’s already too late. This is an early build aimed at putting an agent on that work, far enough ahead that the cut-off stops being an emergency.',
     stack: [],
     links: [],
   },
@@ -234,18 +240,21 @@ export const internalWork: {
  * Update it whenever focus shifts — it's the thing that signals you're active.
  */
 export const now = [
-  { text: 'Building CyclOps — open-source CI failure triage that fixes what it finds', tag: 'building' },
   {
-    text: 'Picking up work with Expedia’s marketing ML team — production pipeline changes in PySpark on Databricks and Airflow',
-    tag: 'shipping',
+    text: 'Looking for work where I can use and build with new technology — agentic AI especially: MCP servers, agent frameworks, and the evaluation harnesses that keep agents honest',
+    tag: 'looking for',
   },
   {
-    text: 'Multi-agent AI tooling and reusable Claude Code skills, adopted across the org through an internal skills marketplace',
+    text: 'Six-month rotation on Expedia Group’s marketing ML team — data-quality checks, consolidating per-market workflows into one, and making sure a skewed day or a late backfill raises an alert with enough context to act on',
+    tag: 'rotation',
+  },
+  {
+    text: 'Multi-agent AI tooling and reusable Claude Code skills at Expedia Group, shared across the org through an internal skills marketplace',
     tag: 'building',
   },
   {
-    text: 'Looking for agentic AI projects to contribute to — the tooling layer especially: MCP servers, agent frameworks, and the evaluation harnesses that keep agents honest',
-    tag: 'contributing',
+    text: 'Maintaining CyclOps and AdoptAheadOS in the open, and writing up what I learn building them',
+    tag: 'open source',
   },
 ];
 
@@ -298,7 +307,7 @@ export const experience = [
       {
         label: 'ML engineering',
         id: 'ml',
-        note: 'a stint with the marketing ML team, 2026',
+        note: 'six-month rotation with the marketing ML team, Feb — Aug 2026',
         highlights: [
           {
             text: 'Refactored the production cost/volume circuit breaker in a churn-prevention PySpark pipeline from hardcoded brand logic to a config-driven market registry — new markets now onboard through a YAML change with zero code changes, verified against production data on Databricks and the live Airflow job.',
@@ -307,6 +316,10 @@ export const experience = [
           {
             text: 'Found and fixed silent data-quality bugs: UK traffic skipped by region detection, crashes on legacy tables, and a rerun bug blocking every market. Wrote the architecture docs and onboarding runbook the team uses now.',
             tags: ['Python', 'Databricks', 'Data quality'],
+          },
+          {
+            text: 'Added regression handling for bad days — a skewed dataset or a late backfill now raises an alert carrying the context needed to diagnose it, rather than passing silently.',
+            tags: ['Python', 'Airflow', 'Data quality'],
           },
         ],
       },

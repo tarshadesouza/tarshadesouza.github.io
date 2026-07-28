@@ -132,6 +132,35 @@ export function realOnly<T extends object>(items: T[], ...keys: (keyof T)[]): T[
   return items.filter((item) => keys.some((key) => !isTodo(item[key])));
 }
 
+/* ── Inline links in prose ───────────────────────────────────────────────── */
+
+export type TextPart = string | { label: string; href: string };
+
+/**
+ * Splits `[label](https://…)` out of a paragraph so a component can render
+ * real anchors around plain text.
+ *
+ * Deliberately returns parts rather than an HTML string: nothing here is ever
+ * passed to set:html, so a stray angle bracket in the copy stays a character
+ * instead of becoming markup. Only http(s) and mailto links are recognised —
+ * anything else is left as literal text rather than silently linked.
+ */
+export function inlineLinks(text: string): TextPart[] {
+  const pattern = /\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^\s)]+)\)/g;
+  const parts: TextPart[] = [];
+  let last = 0;
+
+  for (const match of text.matchAll(pattern)) {
+    const at = match.index ?? 0;
+    if (at > last) parts.push(text.slice(last, at));
+    parts.push({ label: match[1], href: match[2] });
+    last = at + match[0].length;
+  }
+
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
+
 /* ── Formatting ──────────────────────────────────────────────────────────── */
 
 export function relativeTime(iso: string): string {
