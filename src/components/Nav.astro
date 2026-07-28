@@ -19,18 +19,12 @@ const links = [
     <a class="nav-mark" href="#top" aria-label={`${site.name} — back to top`}>
       <span class="dot" aria-hidden="true"></span>
       {/*
-        The same italic serif T as the favicon, without its tile. Inline rather
-        than an <img> so it takes the accent colour from the theme and costs no
-        extra request. Cropped to the letterform.
+        The same TD as the favicon, without its tile. Inline rather than an
+        <img> so it takes the accent from the theme and costs no extra
+        request; the viewBox crops the tile's padding away.
       */}
-      <svg class="nav-glyph" viewBox="9 13 51 35" aria-hidden="true" focusable="false">
-        <g fill="var(--accent)" transform="translate(6.5 0) skewX(-11)">
-          <rect x="12" y="15" width="40" height="5.5" />
-          <rect x="12" y="15" width="4" height="8" />
-          <rect x="48" y="15" width="4" height="8" />
-          <rect x="29.5" y="15" width="5" height="31" />
-          <rect x="24" y="41" width="16" height="5" />
-        </g>
+      <svg class="nav-glyph" viewBox="8 12 48 40" aria-hidden="true" focusable="false">
+        <path fill="var(--accent)" transform="translate(5.45 50.36) scale(0.0499 -0.0499)" d="M65 0Q51 0 51 10Q51 20 67 23L109 30Q129 33 139 40.5Q149 48 153 69L292 669Q295 683 289.5 689Q284 695 265 695Q231 695 190.5 667.5Q150 640 118 565L102 527Q97 514 85 514Q71 514 76 531L126 712Q132 735 148 735Q157 735 162.5 731.5Q168 728 181 724Q194 720 226 720L449 720Q481 720 496.5 724Q512 728 519.5 731.5Q527 735 533 735Q550 735 545 712L513 531Q510 514 496 514Q483 514 485 527L487 552Q493 626 468 660.5Q443 695 398 695Q379 695 371.5 689Q364 683 361 669L222 69Q217 48 223.5 40.5Q230 33 249 30L296 23Q307 22 307 12Q307 0 291 0Z M459 0Q445 0 445 10Q445 21 465 24L485 27Q507 30 515.5 37.5Q524 45 528 66L664 654Q669 675 664 682Q659 689 639 693L619 697Q606 700 606 708Q606 720 624 720L825 720Q911 720 961.5 656.5Q1012 593 1012 468Q1012 376 983 291.5Q954 207 905 141.5Q856 76 793.5 38Q731 0 663 0ZM668 26Q725 26 775 68Q825 110 863 182.5Q901 255 922.5 346Q944 437 944 534Q944 614 911 654Q878 694 819 694Q744 694 727 621L607 99Q598 59 614.5 42.5Q631 26 668 26Z" />
       </svg>
     </a>
 

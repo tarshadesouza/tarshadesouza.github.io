@@ -54,14 +54,14 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
     font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 128px;
     line-height: .95; letter-spacing: -.02em; position: relative;
   }
-  h1 em { font-style: italic; color: #ff704d; }
+  h1 em { font-style: italic; color: #3fcfc7; }
   p {
     font-size: 27px; color: #9aa0b0; margin-top: 34px; max-width: 760px;
     line-height: 1.45; position: relative;
   }
   .rule {
     position: absolute; left: 84px; bottom: 74px; width: 96px; height: 4px;
-    background: #ff704d; border-radius: 2px;
+    background: #3fcfc7; border-radius: 2px;
   }
 </style></head><body>
   <div class="glow"></div><div class="grid"></div>
@@ -74,7 +74,11 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
 
-const browser = await chromium.launch();
+// Environments that ship a browser rather than letting Playwright download one
+// can point at it: PLAYWRIGHT_CHROMIUM_PATH=/path/to/chromium npm run og
+const browser = await chromium.launch({
+  executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
+});
 const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
 await page.setContent(html, { waitUntil: 'networkidle' }).catch(() => page.setContent(html));
 await page.waitForTimeout(600);

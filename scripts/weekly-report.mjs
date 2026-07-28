@@ -706,7 +706,9 @@ function renderHtml(cloudflare, search) {
     faint: '#767c8a',
     rule: '#23262d',
     ruleSoft: '#1c1f25',
-    bar: '#7d94b8',
+    // A muted version of the site's teal accent — 5.8:1 on the background.
+    // The full-strength colour is too loud for a block that size in an inbox.
+    bar: '#4f9e98',
     barPrior: '#33363f',
     barEmpty: '#1e2027',
     noteText: '#a08a5e',

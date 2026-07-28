@@ -28,8 +28,8 @@
   --fg-faint: #6b7183;
 
   /* Signal ---------------------------------------------------------------- */
-  --accent: #ff704d;
-  --accent-ink: #ffb59f;
+  --accent: #3fcfc7;
+  --accent-ink: #9fe8e3;
   --accent-soft: color-mix(in oklab, var(--accent) 16%, transparent);
   --accent-glow: color-mix(in oklab, var(--accent) 40%, transparent);
 
@@ -70,8 +70,8 @@
   --fg: #14151a;
   --fg-muted: #5b6070;
   --fg-faint: #8b90a0;
-  --accent: #d94a24;
-  --accent-ink: #a83716;
+  --accent: #0f7a74;
+  --accent-ink: #0a5a55;
 }
 
 /* ============================================================================
