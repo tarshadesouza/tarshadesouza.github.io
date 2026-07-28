@@ -11,6 +11,10 @@
  *  Anything still marked TODO renders a visible amber badge in local dev and is
  *  reported by `npm run build`, so nothing half-finished ships by accident.
  *  A section with an empty array simply does not render.
+ *
+ *  Before writing copy here, read CONTENT.md in the repo root. It has the voice
+ *  rules — facts rather than self-description, no unverifiable superlatives,
+ *  and nothing addressed to whoever is editing this file.
  */
 
 export const TODO = (text: string) => `TODO: ${text}`;

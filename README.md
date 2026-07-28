@@ -17,6 +17,10 @@ Anything still marked `TODO` shows up on the page as an amber placeholder chip a
 counted at the end of every build, so a half-finished section can't quietly ship looking
 like a finished one.
 
+**[`CONTENT.md`](CONTENT.md)** holds the voice rules for that file — facts rather than
+self-description, no superlative without evidence, nothing addressed to whoever is
+editing it. Worth two minutes before writing anything new.
+
 ## What updates itself
 
 | Section | Where it comes from | How often |
