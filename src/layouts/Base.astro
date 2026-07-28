@@ -50,13 +50,20 @@ const personSchema = {
       }
     : {}),
   ...(currentEmployer ? { worksFor: { '@type': 'Organization', name: currentEmployer } } : {}),
+  // Ordered deliberately: this is the machine-readable half of the same
+  // repositioning the prose does, so general engineering and the agent work
+  // come before the iOS specialisation rather than after it.
   knowsAbout: [
     'Software Engineering',
+    'AI Agents',
+    'Developer Tooling',
+    'TypeScript',
+    'Python',
+    'Data Pipelines',
     'iOS Development',
     'Swift',
-    'TypeScript',
+    'GraphQL',
     'Open Source',
-    'Developer Tooling',
     'Mentoring',
   ],
 };

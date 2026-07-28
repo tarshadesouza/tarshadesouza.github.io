@@ -34,7 +34,7 @@ export const site = {
    * characters and lead with the words people actually search for.
    */
   description:
-    'Tarsha de Souza — Senior Software Engineer in Madrid. iOS and design systems at Expedia Group, ML pipelines, multi-agent AI tooling, and open source.',
+    'Tarsha de Souza — Senior Software Engineer in Madrid. AI agent tooling, data pipelines, and seven years of iOS at Expedia Group. Open source on GitHub.',
   location: 'Madrid, Spain',
   /** Used for the "available for" line in the hero. Set to null to hide it. */
   status: 'Open to new roles',
@@ -268,7 +268,7 @@ export const now = [
 export const experience = [
   {
     company: 'Expedia Group',
-    role: 'Senior Software Engineer, iOS — Design Systems Platform',
+    role: 'Senior Software Engineer — Design Systems Platform',
     period: 'Dec 2020 — Present',
     location: 'Madrid, Spain',
     summary:
@@ -279,29 +279,17 @@ export const experience = [
      */
     tracks: [
       {
-        label: 'iOS & design systems',
-        /** Used by the discipline filter on the CV. */
-        id: 'ios',
+        label: 'AI engineering',
+        id: 'ai',
+        note: '2024 to present',
         highlights: [
           {
-            text: 'Cut iOS build times by 24% through modularisation and tooling, after profiling the build graph.',
-            tags: ['Swift', 'iOS', 'Build tooling'],
+            text: 'Built multi-agent systems (Claude, Codex) for design-to-code generation from Figma, autonomous debugging and self-healing CI — agent-driven fixes gated by verification loops and human-in-the-loop checkpoints.',
+            tags: ['Claude', 'Codex / OpenAI', 'Multi-agent', 'CI/CD'],
           },
           {
-            text: 'Built server-driven UI authentication flows on GraphQL, so stakeholders ship login-flow changes across 23 brands without waiting for an app release cycle.',
-            tags: ['GraphQL', 'iOS', 'Design Systems'],
-          },
-          {
-            text: 'Built the automated maturity-tier promotion system for the next-generation design-system iOS library, and set up its Artifactory release pipeline.',
-            tags: ['iOS', 'Design Systems', 'CI/CD', 'Artifactory'],
-          },
-          {
-            text: 'Won a company hackathon with App Intents backed by live data, and carried it through to production — 130,000+ events between 25 September and 7 October 2024, 120,000 of them from the lodging intent alone. It ships in the Expedia app today.',
-            tags: ['Swift', 'iOS', 'App Intents'],
-          },
-          {
-            text: 'Created Xray, an internal debugging tool for design-system components.',
-            tags: ['Swift', 'iOS', 'Developer Tooling'],
+            text: 'Created reusable Claude Code skills and orchestration agents adopted across the org through an internal skills marketplace.',
+            tags: ['Claude', 'Multi-agent', 'Developer Tooling'],
           },
         ],
       },
@@ -325,17 +313,29 @@ export const experience = [
         ],
       },
       {
-        label: 'AI engineering',
-        id: 'ai',
-        note: '2024 to present',
+        label: 'iOS & design systems',
+        /** Used by the discipline filter on the CV. */
+        id: 'ios',
         highlights: [
           {
-            text: 'Built multi-agent systems (Claude, Codex) for design-to-code generation from Figma, autonomous debugging and self-healing CI — agent-driven fixes gated by verification loops and human-in-the-loop checkpoints.',
-            tags: ['Claude', 'Codex / OpenAI', 'Multi-agent', 'CI/CD'],
+            text: 'Cut iOS build times by 24% through modularisation and tooling, after profiling the build graph.',
+            tags: ['Swift', 'iOS', 'Build tooling'],
           },
           {
-            text: 'Created reusable Claude Code skills and orchestration agents adopted across the org through an internal skills marketplace.',
-            tags: ['Claude', 'Multi-agent', 'Developer Tooling'],
+            text: 'Built server-driven UI authentication flows on GraphQL, so stakeholders ship login-flow changes across 23 brands without waiting for an app release cycle.',
+            tags: ['GraphQL', 'iOS', 'Design Systems'],
+          },
+          {
+            text: 'Built the automated maturity-tier promotion system for the next-generation design-system iOS library, and set up its Artifactory release pipeline.',
+            tags: ['iOS', 'Design Systems', 'CI/CD', 'Artifactory'],
+          },
+          {
+            text: 'Built App Intents backed by live data in a five-day hackathon and took them to production — 130,000+ events between 25 September and 7 October 2024, 120,000 of them from the lodging intent alone. Still shipping in the Expedia app.',
+            tags: ['Swift', 'iOS', 'App Intents'],
+          },
+          {
+            text: 'Created Xray, an internal debugging tool for design-system components.',
+            tags: ['Swift', 'iOS', 'Developer Tooling'],
           },
         ],
       },
