@@ -36,7 +36,7 @@ const entries = projects
   title="Projects"
   note="Built at work and in the open. Stars, licence and stack read themselves off the repositories."
 >
-  <p class="lede" data-reveal>{projectsIntro}</p>
+  {projectsIntro && <p class="lede" data-reveal>{projectsIntro}</p>}
 
   <InternalWork />
 

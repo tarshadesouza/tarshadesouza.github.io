@@ -122,11 +122,11 @@ export const intro = [
 /* ── Projects ────────────────────────────────────────────────────────────── */
 
 /**
- * One line above the project cards. Two side projects look like hobbies; the
- * same idea twice looks like a thesis — so say the thesis out loud.
+ * Optional line above the project cards. Empty on purpose: the cards state
+ * what each project does, the hero already names the two recent ones, and a
+ * sentence here was repeating both. Put a string back and it renders.
  */
-export const projectsIntro =
-  'There’s a pattern in what I build: agents pointed at the work engineering teams put off. The failing build nobody wants to read the logs for. The OS migration that slips until Apple’s deadline makes it urgent.';
+export const projectsIntro = '';
 
 /**
  * `repo` pulls the description, stars, languages and last-commit date straight
@@ -151,7 +151,7 @@ export const projects = [
     repo: 'tarshadesouza/AdoptAheadOS',
     featured: true,
     blurb:
-      'Apple’s deadlines don’t move. Every year brings a hard cut-off for building against the new OS, and adoption work is the first thing a roadmap pushes down — so teams find out they’re behind at the point where it’s already too late. This is an early build aimed at putting an agent on that work, far enough ahead that the cut-off stops being an emergency.',
+      'Adoption work is the first thing a roadmap pushes down, so teams find out they’re behind when Apple’s cut-off is already close. This is an early build aimed at putting an agent on that work, far enough ahead that the deadline stops being an emergency.',
     stack: [],
     links: [],
   },
@@ -159,7 +159,7 @@ export const projects = [
     repo: 'tarshadesouza/SmartMealPlanner',
     featured: false,
     blurb:
-      'An early go at the OpenAI SDK, from back when wiring an LLM into an iOS app meant building the plumbing yourself. A questionnaire on habits and weight goals goes in; a meal plan generated around them comes out.',
+      'Built in December 2023, when there was no official Swift SDK and putting a model behind an iOS feature meant writing the plumbing yourself. A questionnaire on habits and weight goals goes in; a meal plan built around them comes out.',
     stack: ['OpenAI API'],
     links: [],
   },
