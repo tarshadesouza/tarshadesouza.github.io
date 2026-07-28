@@ -517,10 +517,11 @@ export const reading = {
     // Fiction, memoir and essays.
     {
       // The first of the Corfu trilogy, and the one people know it by.
+      // Autobiographical, but embellished enough to sit with the novels.
       title: 'My Family and Other Animals',
       author: 'Gerald Durrell',
-      subject: 'Memoir',
-      note: '', shelf: 'non-fiction' as const,
+      subject: 'Fiction',
+      note: '', shelf: 'fiction' as const,
     },
     {
       // Written under a pen name, with names and places changed — shelved as
