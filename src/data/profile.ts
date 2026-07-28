@@ -471,6 +471,46 @@ export const mentoring = {
   testimonials: [] as { quote: string; attribution: string }[],
 };
 
+/* ── Reading ─────────────────────────────────────────────────────────────── */
+
+/**
+ * Books worth saying out loud. Deliberately not all engineering — a shelf of
+ * programming titles reads as professional development, whereas a shelf with
+ * Grandin and Hawking on it says something about how you think.
+ *
+ * `note` is optional and appears under the title. Leave it out and the card
+ * shows title, author and subject. An empty `books` array hides the section.
+ */
+export const reading = {
+  intro:
+    'Mostly non-fiction. Some of it is about building software and most of it isn’t, which is usually the point.',
+  books: [
+    {
+      title: 'The Pragmatic Programmer',
+      author: 'Andrew Hunt & David Thomas',
+      subject: 'Engineering',
+      note: '',
+    },
+    { title: 'Atomic Habits', author: 'James Clear', subject: 'Behaviour', note: '' },
+    { title: 'Flow', author: 'Mihaly Csikszentmihalyi', subject: 'Psychology', note: '' },
+    { title: 'Contagious', author: 'Jonah Berger', subject: 'Behaviour', note: '' },
+    { title: 'Lean In', author: 'Sheryl Sandberg', subject: 'Work', note: '' },
+    {
+      title: 'Brief Answers to the Big Questions',
+      author: 'Stephen Hawking',
+      subject: 'Science',
+      note: '',
+    },
+    {
+      title: 'Different Kinds of Minds',
+      author: 'Temple Grandin',
+      subject: 'Science',
+      note: '',
+    },
+    { title: 'Outliers', author: 'Malcolm Gladwell', subject: 'Behaviour', note: '' },
+  ],
+};
+
 /* ── Anything else ───────────────────────────────────────────────────────── */
 
 /** Extra links for the footer. */

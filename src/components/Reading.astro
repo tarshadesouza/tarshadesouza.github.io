@@ -1,0 +1,155 @@
+---
+/**
+ * The shelf. Each book is drawn rather than photographed: a spine, a cover
+ * face and the title set in the display serif.
+ *
+ * No cover images on purpose — real jacket art is under copyright, and
+ * fetching it would put the only third-party requests on an otherwise
+ * self-contained page. Drawing them keeps the section on-brand in both
+ * themes, costs nothing to load, and can never render a broken image.
+ *
+ * The hue per book is derived from its title, so it's stable across builds
+ * and no two adjacent spines collide by accident.
+ */
+import Section from './Section.astro';
+import { reading } from '../data/profile';
+
+/** Stable per-title hue: same book, same colour, every build. */
+function hue(title: string) {
+  let total = 0;
+  for (const char of title) total = (total * 31 + char.charCodeAt(0)) % 360;
+  return total;
+}
+---
+
+{
+  reading.books.length > 0 && (
+    <Section id="reading" index="07 / Reading" title="On the shelf" note={reading.intro}>
+      <ul class="shelf" data-stagger="60">
+        {reading.books.map((book) => (
+          <li class="book" data-reveal style={`--hue:${hue(book.title)}`}>
+            <article class="book-face">
+              <span class="book-spine" aria-hidden="true" />
+              <p class="book-subject">{book.subject}</p>
+              <h3 class="book-title">{book.title}</h3>
+              <p class="book-author">{book.author}</p>
+              {book.note && <p class="book-note">{book.note}</p>}
+            </article>
+          </li>
+        ))}
+      </ul>
+    </Section>
+  )
+}
+
+<style>
+  .shelf {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 13.5rem), 1fr));
+    gap: 1rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .book {
+    margin: 0;
+  }
+
+  /*
+   * The cover face. The hue comes from the title, but it's mixed heavily into
+   * the page background so the shelf reads as one object rather than as eight
+   * competing colours.
+   */
+  .book-face {
+    position: relative;
+    height: 100%;
+    min-height: 11rem;
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem 1.25rem 1.25rem 1.75rem;
+    border: 1px solid var(--hairline);
+    border-radius: 4px 10px 10px 4px;
+    background:
+      linear-gradient(
+        155deg,
+        color-mix(in oklab, hsl(var(--hue) 60% 55%) 14%, var(--bg-raised)),
+        var(--bg-raised) 70%
+      );
+    overflow: hidden;
+    transition:
+      transform 320ms var(--ease, cubic-bezier(0.2, 0.7, 0.2, 1)),
+      border-color 320ms ease;
+  }
+
+  /* The spine: a darker band down the binding edge. */
+  .book-spine {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0.55rem;
+    background: linear-gradient(
+      to right,
+      color-mix(in oklab, hsl(var(--hue) 55% 45%) 65%, var(--bg)),
+      color-mix(in oklab, hsl(var(--hue) 55% 45%) 20%, transparent)
+    );
+  }
+
+  .book-subject {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: color-mix(in oklab, hsl(var(--hue) 45% 70%) 70%, var(--fg-muted));
+    margin: 0 0 0.75rem;
+  }
+
+  /*
+   * The same mix is far too pale against a light background — a 70%-lightness
+   * hue on near-white is barely a colour. Darken the hue rather than the mix,
+   * so the label keeps its identity and becomes readable.
+   */
+  :global([data-theme='light']) .book-subject {
+    color: color-mix(in oklab, hsl(var(--hue) 55% 32%) 70%, var(--fg-muted));
+  }
+
+  .book-title {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    line-height: 1.15;
+    text-wrap: balance;
+    margin: 0 0 0.4rem;
+    color: var(--fg);
+  }
+
+  .book-author {
+    font-size: 0.8rem;
+    color: var(--fg-muted);
+    margin: 0;
+  }
+
+  .book-note {
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--fg-muted);
+    margin: 0.75rem 0 0;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--hairline);
+  }
+
+  /* Pushed up slightly, as though pulled out of the shelf. */
+  @media (hover: hover) {
+    .book-face:hover {
+      transform: translateY(-4px);
+      border-color: color-mix(in oklab, hsl(var(--hue) 50% 60%) 40%, var(--hairline));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .book-face {
+      transition: none;
+    }
+    .book-face:hover {
+      transform: none;
+    }
+  }
+</style>
