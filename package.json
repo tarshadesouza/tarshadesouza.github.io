@@ -7,19 +7,21 @@
     "dev": "astro dev",
     "start": "astro dev",
     "sync": "node scripts/fetch-feeds.mjs",
-    "build": "node scripts/fetch-feeds.mjs && astro build",
+    "build": "node scripts/fetch-feeds.mjs && node scripts/fetch-covers.mjs && astro build",
     "build:offline": "astro build",
     "preview": "astro preview",
     "check": "astro check",
     "test": "node --test \"scripts/lib/*.test.mjs\"",
     "og": "node scripts/og-image.mjs",
-    "report": "node scripts/weekly-report.mjs --dry-run"
+    "report": "node scripts/weekly-report.mjs --dry-run",
+    "covers": "node scripts/fetch-covers.mjs"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",
     "@astrojs/sitemap": "^3.7.0",
     "astro": "^7.1.3",
     "graphql": "^16.11.0",
+    "sharp": "^0.34.0",
     "typescript": "^5.9.0"
   },
   "dependencies": {

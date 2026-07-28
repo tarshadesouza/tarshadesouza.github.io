@@ -483,7 +483,7 @@ export const mentoring = {
  */
 export const reading = {
   intro:
-    'Mostly non-fiction. Some of it is about building software and most of it isn’t, which is usually the point.',
+    'Reading is what I do with most of my spare time. Mostly non-fiction — some of it about building software, most of it not.',
   books: [
     {
       title: 'The Pragmatic Programmer',

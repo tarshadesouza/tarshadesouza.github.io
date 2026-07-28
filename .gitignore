@@ -5,3 +5,8 @@ dist/
 *.log
 .env
 .env.production
+
+# Book covers, fetched from Open Library at build time. Not committed: they're
+# third-party jacket art, and the shelf falls back to its drawn covers without
+# them. See scripts/fetch-covers.mjs.
+public/books/

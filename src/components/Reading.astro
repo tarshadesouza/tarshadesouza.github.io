@@ -13,6 +13,7 @@
  */
 import Section from './Section.astro';
 import { reading } from '../data/profile';
+import covers from '../data/generated/books.json';
 
 /** Stable per-title hue: same book, same colour, every build. */
 function hue(title: string) {
@@ -20,23 +21,43 @@ function hue(title: string) {
   for (const char of title) total = (total * 31 + char.charCodeAt(0)) % 360;
   return total;
 }
+
+/** Must match slugify() in scripts/fetch-covers.mjs. */
+const slugify = (title: string) =>
+  title
+    .toLowerCase()
+    .replace(/['’]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
+const thumbnails = covers as Record<string, string>;
 ---
 
 {
   reading.books.length > 0 && (
     <Section id="reading" index="07 / Reading" title="On the shelf" note={reading.intro}>
       <ul class="shelf" data-stagger="60">
-        {reading.books.map((book) => (
-          <li class="book" data-reveal style={`--hue:${hue(book.title)}`}>
-            <article class="book-face">
-              <span class="book-spine" aria-hidden="true" />
-              <p class="book-subject">{book.subject}</p>
-              <h3 class="book-title">{book.title}</h3>
-              <p class="book-author">{book.author}</p>
-              {book.note && <p class="book-note">{book.note}</p>}
-            </article>
-          </li>
-        ))}
+        {reading.books.map((book) => {
+          const cover = thumbnails[slugify(book.title)];
+          return (
+            <li class="book" data-reveal style={`--hue:${hue(book.title)}`}>
+              <article class:list={['book-face', cover && 'has-cover']}>
+                <span class="book-spine" aria-hidden="true" />
+                {cover && (
+                  // Decorative: the title and author sit right beside it, so a
+                  // screen reader announcing the jacket as well is just noise.
+                  <img class="book-cover" src={cover} alt="" width="76" height="114" loading="lazy" decoding="async" />
+                )}
+                <div class="book-detail">
+                  <p class="book-subject">{book.subject}</p>
+                  <h3 class="book-title">{book.title}</h3>
+                  <p class="book-author">{book.author}</p>
+                  {book.note && <p class="book-note">{book.note}</p>}
+                </div>
+              </article>
+            </li>
+          );
+        })}
       </ul>
     </Section>
   )
@@ -45,7 +66,12 @@ function hue(title: string) {
 <style>
   .shelf {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 13.5rem), 1fr));
+    /*
+     * Wide enough that a jacket and a title can sit side by side. At 13.5rem
+     * the text column was left with about seven characters and titles broke
+     * across three lines.
+     */
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
     gap: 1rem;
     list-style: none;
     margin: 0;
@@ -92,6 +118,33 @@ function hue(title: string) {
       color-mix(in oklab, hsl(var(--hue) 55% 45%) 65%, var(--bg)),
       color-mix(in oklab, hsl(var(--hue) 55% 45%) 20%, transparent)
     );
+  }
+
+  /*
+   * With a thumbnail the card becomes two columns: jacket, then detail. The
+   * drawn cover underneath still shows through around it, which is what keeps
+   * a shelf of mixed hits and misses looking like one thing.
+   */
+  .book-face.has-cover {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+    /* The jacket gives the card its height; the drawn version needed a floor. */
+    min-height: 0;
+  }
+
+  .book-cover {
+    width: 4.75rem;
+    height: auto;
+    border-radius: 3px;
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.4),
+      0 10px 22px -12px rgba(0, 0, 0, 0.8);
+  }
+
+  .book-detail {
+    min-width: 0;
   }
 
   .book-subject {
