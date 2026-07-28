@@ -37,7 +37,7 @@ export const site = {
     'Tarsha de Souza — Senior Software Engineer in Madrid. iOS and design systems at Expedia Group, ML pipelines, multi-agent AI tooling, and open source.',
   location: 'Madrid, Spain',
   /** Used for the "available for" line in the hero. Set to null to hide it. */
-  status: 'Open to interesting problems',
+  status: 'Open to new roles',
 } as const;
 
 /* ── Where to find you ───────────────────────────────────────────────────── */
@@ -141,7 +141,7 @@ export const projects = [
     repo: 'tarshadesouza/cyclops',
     featured: true,
     blurb:
-      'A GitHub App that turns a red build into a green one. Six specialised detectors classify the failure, AI enriches it with evidence and a confidence score, and — with one tick in the PR — a coding agent fixes it in an isolated sandbox, verified against your real CI rather than a local guess. Permission-gated, and it runs on your own API key.',
+      'A GitHub App for failing CI. Six specialised detectors classify the failure, AI enriches it with evidence and a confidence score, and — with one tick in the PR — a coding agent fixes it in an isolated sandbox, verified against your real CI rather than a local guess. Permission-gated, and it runs on your own API key.',
     stack: ['PostgreSQL', 'Redis', 'BullMQ', 'Prisma', 'Turborepo', 'Railway'],
     links: [
       { label: 'Live docs', href: 'https://tarshadesouza.github.io/cyclops/' },
@@ -272,7 +272,7 @@ export const experience = [
     period: 'Dec 2020 — Present',
     location: 'Madrid, Spain',
     summary:
-      'The design-system platform 23 brands build on — plus the work that took me outside it, wherever a team needed a pair of hands.',
+      'The design-system platform 23 brands build on, plus work outside it.',
     /**
      * Grouped rather than one flat list, because the three strands are the
      * point: the depth is iOS, the range is everything after it.
@@ -284,7 +284,7 @@ export const experience = [
         id: 'ios',
         highlights: [
           {
-            text: 'Cut iOS build times by 24% through modularisation and tooling, after profiling the build graph to find the real bottleneck rather than the obvious one.',
+            text: 'Cut iOS build times by 24% through modularisation and tooling, after profiling the build graph.',
             tags: ['Swift', 'iOS', 'Build tooling'],
           },
           {
@@ -315,7 +315,7 @@ export const experience = [
             tags: ['Python', 'PySpark', 'Databricks', 'Airflow'],
           },
           {
-            text: 'Found and fixed silent data-quality bugs: UK traffic skipped by region detection, crashes on legacy tables, and a rerun bug blocking every market. Wrote the architecture docs and onboarding runbook the team uses now.',
+            text: 'Found and fixed silent data-quality bugs: UK traffic skipped by region detection, crashes on legacy tables, and a rerun bug blocking every market. Wrote the architecture docs and onboarding runbook for the team.',
             tags: ['Python', 'Databricks', 'Data quality'],
           },
           {
@@ -351,7 +351,7 @@ export const experience = [
     summary: 'Customer-facing features in a large-scale, regulated banking app.',
     highlights: [
       {
-        text: 'Integrated a conversational virtual assistant into the banking app — one of the earliest production deployments of conversational AI in the product.',
+        text: 'Integrated a conversational virtual assistant into the banking app.',
         tags: ['Conversational AI', 'Mobile'],
       },
     ],
@@ -455,7 +455,7 @@ export const talks = [
  */
 export const mentoring = {
   intro:
-    'Pairing, reviews that explain the why, the workshops I teach, and the docs and runbooks that outlast any one conversation.',
+    'Mentoring is continuous, and it takes different forms — meeting with more junior engineers, teaching workshops, speaking at events, and writing runbooks.',
 
   /** Programmes or schemes. Keep mentees anonymous unless they've agreed. */
   programmes: [] as { name: string; role: string; period: string; description: string }[],

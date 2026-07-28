@@ -11,7 +11,6 @@ const stats = mentoring.stats.filter((stat) => stat.value > 0);
   id="mentoring"
   index="05 / Mentoring"
   title="Bringing people with me"
-  note="The part of the job that compounds."
 >
   <p class="lede" data-reveal>
     {isTodo(mentoring.intro) ? <Todo value={mentoring.intro} /> : mentoring.intro}
