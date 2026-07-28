@@ -523,10 +523,12 @@ export const reading = {
       note: '', shelf: 'non-fiction' as const,
     },
     {
+      // Written under a pen name, with names and places changed — shelved as
+      // novels rather than as memoir.
       title: 'All Creatures Great and Small',
       author: 'James Herriot',
-      subject: 'Memoir',
-      note: '', shelf: 'non-fiction' as const,
+      subject: 'Fiction',
+      note: '', shelf: 'fiction' as const,
     },
     { title: 'A Walk in the Woods', author: 'Bill Bryson', subject: 'Travel', note: '', shelf: 'non-fiction' as const },
     { title: 'Calypso', author: 'David Sedaris', subject: 'Essays', note: '', shelf: 'non-fiction' as const },
