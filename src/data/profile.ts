@@ -41,7 +41,7 @@ export const site = {
     'Tarsha de Souza — Senior Software Engineer in Madrid. AI agent tooling, data pipelines, and seven years of iOS at Expedia Group. Open source on GitHub.',
   location: 'Madrid, Spain',
   /** Used for the "available for" line in the hero. Set to null to hide it. */
-  status: 'Open to new roles',
+  status: 'Excited by all things tech',
 } as const;
 
 /* ── Where to find you ───────────────────────────────────────────────────── */
