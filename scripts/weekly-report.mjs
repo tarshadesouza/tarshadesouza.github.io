@@ -688,20 +688,46 @@ function renderText(cloudflare, search) {
 
 function renderHtml(cloudflare, search) {
   const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+  /**
+   * Every colour in the email, in one place.
+   *
+   * Deliberately low-contrast: the background is lifted off pure black and the
+   * text stops short of pure white, because #fff on #000 is what makes a dark
+   * email glare. Nothing here is saturated — the bars are a dusty blue rather
+   * than the site's accent orange, which vibrated badly against near-black.
+   */
+  const c = {
+    bg: '#14161b',
+    text: '#d4d7de',
+    strong: '#eceef2',
+    muted: '#8a90a0',
+    // ~4.3:1 on the background. The previous value was nearer 3:1, which is
+    // thin for 11–13px metadata even when it's meant to recede.
+    faint: '#767c8a',
+    rule: '#23262d',
+    ruleSoft: '#1c1f25',
+    bar: '#7d94b8',
+    barPrior: '#33363f',
+    barEmpty: '#1e2027',
+    noteText: '#a08a5e',
+    noteBg: '#1c1a14',
+    noteRule: '#2a2620',
+  };
+
   const css = {
-    body: 'margin:0;padding:24px;background:#08090c;color:#e9eaef;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.6',
+    body: `margin:0;padding:24px;background:${c.bg};color:${c.text};font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.6`,
     wrap: 'max-width:640px;margin:0 auto',
-    h1: 'font-size:22px;margin:0 0 4px;font-weight:600',
-    sub: 'color:#6b7183;font-size:13px;margin:0 0 28px',
-    h2: 'font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#ff704d;margin:32px 0 12px;font-weight:600',
-    big: 'font-size:30px;font-weight:600;color:#fff;margin:0',
-    label: 'color:#9aa0b0;font-size:13px',
-    delta: 'color:#6b7183;font-size:12px;margin-left:6px',
+    h1: `font-size:22px;margin:0 0 4px;font-weight:600;color:${c.strong}`,
+    sub: `color:${c.faint};font-size:13px;margin:0 0 28px`,
+    h2: `font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:${c.muted};margin:32px 0 12px;font-weight:600`,
+    big: `font-size:30px;font-weight:600;color:${c.strong};margin:0`,
+    label: `color:${c.muted};font-size:13px`,
+    delta: `color:${c.faint};font-size:12px;margin-left:6px`,
     table: 'width:100%;border-collapse:collapse;margin:8px 0 4px;font-size:13px',
-    th: 'text-align:left;color:#6b7183;font-weight:400;font-size:11px;text-transform:uppercase;letter-spacing:.08em;padding:6px 0;border-bottom:1px solid #23252c',
-    td: 'padding:7px 0;border-bottom:1px solid #16181d;color:#c9ccd6',
-    num: 'padding:7px 0;border-bottom:1px solid #16181d;color:#fff;text-align:right;white-space:nowrap',
-    note: 'color:#8b7040;font-size:12px;background:#1a1608;border:1px solid #2e2510;border-radius:8px;padding:12px;margin-top:28px',
+    th: `text-align:left;color:${c.faint};font-weight:400;font-size:11px;text-transform:uppercase;letter-spacing:.08em;padding:6px 0;border-bottom:1px solid ${c.rule}`,
+    td: `padding:7px 0;border-bottom:1px solid ${c.ruleSoft};color:${c.text}`,
+    num: `padding:7px 0;border-bottom:1px solid ${c.ruleSoft};color:${c.strong};text-align:right;white-space:nowrap`,
+    note: `color:${c.noteText};font-size:12px;background:${c.noteBg};border:1px solid ${c.noteRule};border-radius:8px;padding:12px;margin-top:28px`,
   };
 
   /**
@@ -722,7 +748,7 @@ function renderHtml(cloudflare, search) {
         // A zero day still gets a sliver, otherwise the column reads as missing
         // data rather than as a real zero.
         const height = d.visits === 0 ? 3 : Math.max(6, Math.round((d.visits / max) * H));
-        const colour = d.visits === 0 ? '#23252c' : thisWeek ? '#ff704d' : '#3a3d47';
+        const colour = d.visits === 0 ? c.barEmpty : thisWeek ? c.bar : c.barPrior;
         // Explicit width, or the cells size themselves to their contents and
         // the bars come out at a dozen different widths.
         return `<td valign="bottom" width="7%" style="width:7.14%;vertical-align:bottom;padding:0 2px;height:${H}px">
@@ -734,7 +760,7 @@ function renderHtml(cloudflare, search) {
     const labels = series
       .map((d, i) => {
         const strong = i >= 7 && d.visits > 0;
-        return `<td width="7%" style="width:7.14%;text-align:center;padding:6px 0 0;font-size:10px;color:${strong ? '#9aa0b0' : '#4a4e5a'}">${dayLabel(
+        return `<td width="7%" style="width:7.14%;text-align:center;padding:6px 0 0;font-size:10px;color:${strong ? c.muted : c.faint}">${dayLabel(
           d.date,
         ).charAt(0)}</td>`;
       })
@@ -747,9 +773,9 @@ function renderHtml(cloudflare, search) {
         <tr>${cells}</tr>
         <tr>${labels}</tr>
       </table>
-      <p style="${css.label};font-size:11px;color:#6b7183">
-        <span style="color:#3a3d47">&#9608;</span> previous 7 days &nbsp;
-        <span style="color:#ff704d">&#9608;</span> this week &nbsp;·&nbsp;
+      <p style="${css.label};font-size:11px;color:${c.faint}">
+        <span style="color:${c.barPrior}">&#9608;</span> previous 7 days &nbsp;
+        <span style="color:${c.bar}">&#9608;</span> this week &nbsp;·&nbsp;
         peak ${busiest?.visits ?? 0} on ${esc(dayLabel(busiest?.date ?? series[13].date))}
       </p>`;
   };
@@ -815,7 +841,7 @@ function renderHtml(cloudflare, search) {
   const notes = takeaways(cloudflare, search);
   if (notes.length) {
     html += `<h2 style="${css.h2}">What it says</h2>
-      <ul style="margin:0;padding-left:18px;color:#c9ccd6;font-size:13px">
+      <ul style="margin:0;padding-left:18px;color:${c.text};font-size:13px">
         ${notes.map((n) => `<li style="margin-bottom:7px">${esc(n)}</li>`).join('')}
       </ul>`;
   }
