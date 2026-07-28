@@ -483,7 +483,7 @@ export const mentoring = {
  */
 export const reading = {
   intro:
-    'Reading is what I do with most of my spare time. Mostly non-fiction — some of it about building software, most of it not.',
+    'Reading is what I do with most of my spare time. Non-fiction, memoir and novels in roughly equal measure, and only a little of it about software.',
   books: [
     {
       title: 'The Pragmatic Programmer',
@@ -508,6 +508,32 @@ export const reading = {
       note: '',
     },
     { title: 'Outliers', author: 'Malcolm Gladwell', subject: 'Behaviour', note: '' },
+    {
+      title: 'Algorithms to Live By',
+      author: 'Brian Christian & Tom Griffiths',
+      subject: 'Science',
+      note: '',
+    },
+    // Fiction, memoir and essays.
+    {
+      // The first of the Corfu trilogy, and the one people know it by.
+      title: 'My Family and Other Animals',
+      author: 'Gerald Durrell',
+      subject: 'Memoir',
+      note: '',
+    },
+    {
+      title: 'All Creatures Great and Small',
+      author: 'James Herriot',
+      subject: 'Memoir',
+      note: '',
+    },
+    { title: 'A Walk in the Woods', author: 'Bill Bryson', subject: 'Travel', note: '' },
+    { title: 'Calypso', author: 'David Sedaris', subject: 'Essays', note: '' },
+    { title: 'Heartburn', author: 'Nora Ephron', subject: 'Fiction', note: '' },
+    { title: 'Auntie Mame', author: 'Patrick Dennis', subject: 'Fiction', note: '' },
+    { title: '1984', author: 'George Orwell', subject: 'Classic', note: '' },
+    { title: 'The Picture of Dorian Gray', author: 'Oscar Wilde', subject: 'Classic', note: '' },
   ],
 };
 

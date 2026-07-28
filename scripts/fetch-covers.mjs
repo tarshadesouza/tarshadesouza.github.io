@@ -45,7 +45,12 @@ export function parseBooks(source) {
   const section = source.match(/export const reading = \{[\s\S]*?\n\};/)?.[0];
   if (!section) return [];
 
-  return [...section.matchAll(/\{\s*title:\s*'([^']+)',\s*author:\s*'([^']+)'/g)].map((m) => ({
+  // Strip line comments first. A `//` note between the brace and `title:` is
+  // otherwise enough to drop that book silently, which is how the Durrell
+  // entry disappeared without anything failing.
+  const cleaned = section.replace(/^[ \t]*\/\/.*$/gm, '');
+
+  return [...cleaned.matchAll(/\{\s*title:\s*'([^']+)',\s*author:\s*'([^']+)'/g)].map((m) => ({
     title: m[1],
     author: m[2],
   }));

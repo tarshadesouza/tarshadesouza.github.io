@@ -22,11 +22,37 @@ test('reads every book out of the real profile.ts', async () => {
   const source = await readFile(resolve(ROOT, 'src/data/profile.ts'), 'utf8');
   const books = parseBooks(source);
 
-  assert.ok(books.length > 0, 'parsed no books — the regex has drifted from the file');
+  // Counting `title:` inside the reading block independently: "some books
+  // parsed" is not the assertion that matters, "all of them did" is. A comment
+  // inside one entry silently dropped it and length > 0 still passed.
+  const block = source.match(/export const reading = \{[\s\S]*?\n\};/)[0];
+  // Not anchored to the line start: most entries are written on one line, so
+  // `title:` usually follows the opening brace rather than an indent.
+  const expected = (block.match(/\btitle:\s*'/g) ?? []).length;
+
+  assert.equal(books.length, expected, `parsed ${books.length} of ${expected} books`);
   for (const book of books) {
     assert.ok(book.title.length > 0);
     assert.ok(book.author.length > 0);
   }
+});
+
+test('a comment inside an entry does not drop the book', () => {
+  const source = `
+export const reading = {
+  books: [
+    {
+      // The first of the trilogy, and the one people know it by.
+      title: 'My Family and Other Animals', author: 'Gerald Durrell', subject: 'Memoir', note: '',
+    },
+    { title: 'Calypso', author: 'David Sedaris', subject: 'Essays', note: '' },
+  ],
+};
+`;
+  assert.deepEqual(
+    parseBooks(source).map((b) => b.title),
+    ['My Family and Other Animals', 'Calypso'],
+  );
 });
 
 test('parses titles and authors in order', () => {
