@@ -15,7 +15,8 @@
     "og": "node scripts/og-image.mjs",
     "report": "node scripts/weekly-report.mjs --dry-run",
     "covers": "node scripts/fetch-covers.mjs",
-    "icons": "node scripts/icons.mjs"
+    "icons": "node scripts/icons.mjs",
+    "cv": "node scripts/cv-pdf.mjs"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",

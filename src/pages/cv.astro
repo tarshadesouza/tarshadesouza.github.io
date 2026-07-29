@@ -1,0 +1,218 @@
+---
+/**
+ * A print view of the CV, and the source the PDF is generated from
+ * (scripts/cv-pdf.mjs). It reads the same profile.ts as the site, so the PDF
+ * cannot drift out of step with the page — regenerate it and the two agree.
+ *
+ * Deliberately not indexed: the homepage is the canonical version, and two
+ * URLs carrying the same CV would compete with each other in search.
+ */
+import '../styles/global.css';
+import { site, social, experience, education, talks, intro } from '../data/profile';
+import { isTodo, monthYear } from '../lib/content';
+
+type Highlight = string | { text: string; tags?: string[] };
+const textOf = (item: Highlight) => (typeof item === 'string' ? item : item.text);
+
+const contact = [
+  site.location,
+  social.email,
+  `github.com/${social.github}`,
+  !isTodo(social.linkedin) ? `linkedin.com/in/${social.linkedin}` : null,
+  site.url.replace('https://', ''),
+].filter(Boolean);
+---
+
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{site.name} — CV</title>
+    <meta name="robots" content="noindex" />
+  </head>
+
+  <body class="cv-page">
+    <header class="cv-head">
+      <h1>{site.name}</h1>
+      <p class="cv-role">{site.role}</p>
+      <p class="cv-contact">{contact.join('  ·  ')}</p>
+    </header>
+
+    <p class="cv-summary">{intro[0]}</p>
+
+    <section>
+      <h2>Experience</h2>
+      {experience.map((role) => (
+        <article class="cv-role-block">
+          <div class="cv-role-head">
+            <h3>{role.company} — {role.role}</h3>
+            <span class="cv-period">{role.period}{role.location ? ` · ${role.location}` : ''}</span>
+          </div>
+          {role.summary && <p class="cv-role-summary">{role.summary}</p>}
+
+          {'tracks' in role && role.tracks
+            ? role.tracks.map((track) => (
+                <div class="cv-track">
+                  <h4>
+                    {track.label}
+                    {track.note && <span class="cv-track-note"> — {track.note}</span>}
+                  </h4>
+                  <ul>
+                    {track.highlights.map((item) => <li>{textOf(item as Highlight)}</li>)}
+                  </ul>
+                </div>
+              ))
+            : (
+              <ul>
+                {('highlights' in role ? role.highlights : []).map((item) => (
+                  <li>{textOf(item as Highlight)}</li>
+                ))}
+              </ul>
+            )}
+        </article>
+      ))}
+    </section>
+
+    {talks.length > 0 && (
+      <section>
+        <h2>Teaching and speaking</h2>
+        <ul>
+          {talks.map((talk) => (
+            <li>
+              <strong>{talk.title}</strong> — {talk.event}, {monthYear(talk.date)}
+              {'locations' in talk && talk.locations
+                ? ` · taught in ${(talk.locations as string[]).join(', ')}`
+                : talk.location && talk.location !== 'Internal'
+                  ? ` · ${talk.location}`
+                  : ''}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    <section>
+      <h2>Education</h2>
+      <ul>
+        {education.map((item) => (
+          <li>{item.qualification}, {item.institution} · {item.period}</li>
+        ))}
+      </ul>
+    </section>
+
+    <style is:global>
+      /*
+       * Print-first: white ground, dark ink, one accent. The site's tokens are
+       * for a screen in a dark room; a CV is read on paper or in a PDF viewer
+       * and is often printed in black and white.
+       */
+      .cv-page {
+        --ink: #14151a;
+        --ink-soft: #43485a;
+        --rule: #d8d5d0;
+        --accent-print: #0f7a74;
+
+        background: #fff;
+        color: var(--ink);
+        font-family: var(--font-body);
+        font-size: 10.5pt;
+        line-height: 1.45;
+        max-width: 46rem;
+        margin: 0 auto;
+        padding: 2.5rem 2rem 3rem;
+      }
+
+      .cv-head h1 {
+        font-family: var(--font-display);
+        font-size: 30pt;
+        line-height: 1;
+        margin: 0;
+        color: var(--ink);
+      }
+
+      .cv-role {
+        font-size: 12pt;
+        color: var(--accent-print);
+        margin: 0.35rem 0 0.5rem;
+      }
+
+      .cv-contact {
+        font-size: 9pt;
+        color: var(--ink-soft);
+        margin: 0 0 1.4rem;
+      }
+
+      .cv-summary {
+        margin: 0 0 1.6rem;
+        padding-bottom: 1.2rem;
+        border-bottom: 1px solid var(--rule);
+      }
+
+      .cv-page h2 {
+        font-family: var(--font-body);
+        font-size: 9pt;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--accent-print);
+        margin: 1.6rem 0 0.8rem;
+      }
+
+      .cv-role-block { margin-bottom: 1.3rem; }
+
+      .cv-role-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 1rem;
+      }
+
+      .cv-page h3 {
+        font-family: var(--font-body);
+        font-size: 11pt;
+        font-weight: 600;
+        letter-spacing: 0;
+        margin: 0;
+      }
+
+      .cv-period {
+        font-size: 9pt;
+        color: var(--ink-soft);
+        white-space: nowrap;
+      }
+
+      .cv-role-summary {
+        color: var(--ink-soft);
+        margin: 0.2rem 0 0.6rem;
+      }
+
+      .cv-track { margin: 0.7rem 0; }
+
+      .cv-page h4 {
+        font-size: 9.5pt;
+        font-weight: 600;
+        margin: 0 0 0.35rem;
+      }
+
+      .cv-track-note {
+        font-weight: 400;
+        color: var(--ink-soft);
+      }
+
+      .cv-page ul {
+        margin: 0;
+        padding-left: 1.1rem;
+      }
+
+      .cv-page li { margin-bottom: 0.3rem; }
+
+      /* Keep a role and its first bullets together across a page break. */
+      @media print {
+        .cv-page { padding: 0; max-width: none; }
+        .cv-role-block, .cv-track { break-inside: avoid; }
+        h2 { break-after: avoid; }
+      }
+    </style>
+  </body>
+</html>

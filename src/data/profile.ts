@@ -372,7 +372,12 @@ export const education = [
 ];
 
 /** Optional PDF. Drop the file in public/ and set the path, or leave null. */
-export const cvPdf: string | null = null; // e.g. '/tarsha-de-souza-cv.pdf'
+/**
+ * Generated from /cv by `npm run cv`, which prints the same page the site
+ * builds from this file — so the PDF cannot drift from the CV on the site.
+ * Re-run it after editing anything in `experience` or `education`.
+ */
+export const cvPdf: string | null = '/tarsha-de-souza-cv.pdf';
 
 /* ── Speaking ────────────────────────────────────────────────────────────── */
 
