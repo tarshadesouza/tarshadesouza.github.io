@@ -10,6 +10,15 @@ interface Props {
 
 const { title, description } = Astro.props;
 
+/**
+ * Bumped whenever the mark changes.
+ *
+ * Browsers keep favicons in a cache of their own that a reload — and usually a
+ * hard refresh — doesn't clear, so a redesigned icon can keep serving the old
+ * one for days. Changing the URL is the only reliable way to retire it.
+ */
+const ICON_VERSION = 2;
+
 const pageTitle = title ?? `${site.name} — ${site.role}`;
 const pageDescription = description ?? site.description;
 const canonical = new URL(Astro.url.pathname, Astro.site ?? site.url).href;
@@ -77,10 +86,10 @@ const personSchema = {
     <title>{pageTitle}</title>
     <meta name="description" content={pageDescription} />
     <link rel="canonical" href={canonical} />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href={`/favicon.svg?v=${ICON_VERSION}`} type="image/svg+xml" />
     {/* iOS ignores SVG favicons and needs a raster one. `npm run icons`
         regenerates these from favicon.svg. */}
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" href={`/apple-touch-icon.png?v=${ICON_VERSION}`} />
     <meta name="author" content={site.name} />
     {verification.google && (
       <meta name="google-site-verification" content={verification.google} />
