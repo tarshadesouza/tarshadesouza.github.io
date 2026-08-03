@@ -232,14 +232,14 @@ const q = (value) => JSON.stringify(value);
  * wrong fails the entire query. Everything interpolated here is ours — an
  * account id, a site tag from their API, and two ISO timestamps.
  */
-const filterLiteral = (start, end) =>
-  `{ siteTag: ${q(siteTag)}, datetime_geq: ${q(start.toISOString())}, datetime_leq: ${q(end.toISOString())} }`;
+const filterLiteral = (start, end, extra = '') =>
+  `{ siteTag: ${q(siteTag)}, datetime_geq: ${q(start.toISOString())}, datetime_leq: ${q(end.toISOString())}${extra} }`;
 
-async function cloudflareTotals(start, end) {
+async function cloudflareTotals(start, end, extra = '') {
   const build = (metrics) => `{
     viewer {
       accounts(filter: { accountTag: ${q(CLOUDFLARE_ACCOUNT_ID)} }) {
-        rumPageloadEventsAdaptiveGroups(limit: 1, filter: ${filterLiteral(start, end)}) {
+        rumPageloadEventsAdaptiveGroups(limit: 1, filter: ${filterLiteral(start, end, extra)}) {
           ${metrics}
         }
       }
@@ -270,10 +270,23 @@ async function cloudflareTotals(start, end) {
  * Each breakdown is its own request. If Cloudflare renames a dimension, one
  * table goes missing and says so, instead of the whole report failing.
  */
+/**
+ * Cloudflare flags automated traffic, and on a site this quiet the crawlers
+ * are a large share of the total. The flag comes back as a string; anything
+ * unrecognised is passed through rather than guessed at.
+ */
+const botLabel = (value) =>
+  ({ '0': 'People', '1': 'Bots and crawlers', false: 'People', true: 'Bots and crawlers' })[
+    String(value)
+  ] ?? `Unknown (${value})`;
+
 const BREAKDOWNS = [
+  { key: 'bot', title: 'People or crawlers', format: botLabel },
   { key: 'countryName', title: 'Where they were', format: (v) => country(v) },
   { key: 'refererHost', title: 'How they got here' },
+  { key: 'refererPath', title: 'Which page linked here' },
   { key: 'deviceType', title: 'On what' },
+  { key: 'userAgentOS', title: 'On which system' },
   { key: 'userAgentBrowser', title: 'In which browser' },
   { key: 'requestPath', title: 'Most-read pages' },
 ];
@@ -365,6 +378,17 @@ async function collectCloudflare() {
       cloudflareTotals(previous.start, previous.end).catch(() => null),
     ]);
 
+    // The same week again, excluding automated traffic. Its own request rather
+    // than a subtraction from the breakdown, so the headline stays correct even
+    // if the bot dimension is unavailable — in which case this is null and the
+    // report simply doesn't mention it.
+    const human = await cloudflareTotals(period.start, period.end, ', bot: 0').catch((error) => {
+      problems.push(
+        `Cloudflare bot filter unavailable (${error.message}); totals include crawlers`,
+      );
+      return null;
+    });
+
     // Fourteen days, so this week can be drawn against the one before it.
     let series = null;
     try {
@@ -383,7 +407,7 @@ async function collectCloudflare() {
       }
     }
 
-    return { current, prior, tables, series };
+    return { current, prior, human, tables, series };
   } catch (error) {
     const why = /auth/i.test(error.message) ? ` — ${await explainCloudflareAuth()}` : '';
     problems.push(`Cloudflare unavailable: ${error.message}${why}`);
@@ -598,10 +622,13 @@ function renderText(cloudflare, search) {
   const out = [`Weekly report · ${period.label}`, '='.repeat(46), ''];
 
   if (cloudflare) {
-    const { current, prior, tables, series } = cloudflare;
+    const { current, prior, human, tables, series } = cloudflare;
     out.push('VISITORS (Cloudflare)');
     out.push(`  ${current.visits} visits ${prior ? pct(current.visits, prior.visits) : ''}`);
     out.push(`  ${current.pageViews} page views ${prior ? pct(current.pageViews, prior.pageViews) : ''}`);
+    if (human) {
+      out.push(`  ${human.visits} of those were people; the rest were crawlers`);
+    }
     out.push('');
 
     if (series) {
@@ -800,10 +827,12 @@ function renderHtml(cloudflare, search) {
     <p style="${css.sub}">${esc(period.label)}</p>`;
 
   if (cloudflare) {
-    const { current, prior, tables, series } = cloudflare;
+    const { current, prior, human, tables, series } = cloudflare;
     html += `<h2 style="${css.h2}">Visitors</h2>
       <p style="${css.big}">${current.visits}<span style="${css.delta}">${prior ? esc(pct(current.visits, prior.visits)) : ''}</span></p>
-      <p style="${css.label}">visits · ${current.pageViews} page views ${prior ? esc(pct(current.pageViews, prior.pageViews)) : ''}</p>`;
+      <p style="${css.label}">visits · ${current.pageViews} page views ${prior ? esc(pct(current.pageViews, prior.pageViews)) : ''}${
+        human ? ` · <strong style="color:${c.strong}">${human.visits}</strong> of them people` : ''
+      }</p>`;
 
     if (series) html += chart(series);
 
