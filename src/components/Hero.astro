@@ -53,6 +53,17 @@ const surname = rest.join(' ');
         See the work
         <span class="arrow" aria-hidden="true">→</span>
       </a>
+      {/*
+        On the first screen on purpose. Someone who wants to make contact
+        shouldn't have to read the whole page to find out how — the footer is
+        the wrong and only place for it.
+      */}
+      {!isTodo(social.email) && (
+        <a class="btn" href={`mailto:${social.email}`} data-reveal>
+          Email me
+          <span class="arrow" aria-hidden="true">↗</span>
+        </a>
+      )}
       <a class="btn" href={`https://github.com/${social.github}`} data-reveal rel="me noopener" target="_blank">
         GitHub
         <span class="arrow" aria-hidden="true">↗</span>
