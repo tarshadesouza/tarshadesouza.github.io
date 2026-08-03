@@ -154,6 +154,9 @@ const personSchema = {
     <slot />
     <script>
       import '../scripts/motion.ts';
+      import { initEngagement } from '../scripts/engagement.ts';
+
+      initEngagement();
     </script>
   </body>
 </html>
