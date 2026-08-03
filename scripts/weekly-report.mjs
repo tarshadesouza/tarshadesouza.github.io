@@ -1144,7 +1144,11 @@ async function probeGoatCounter() {
     `/api/v0/export`,
   ];
 
+  // GoatCounter rate-limits at a few requests a second, and a 429 can come
+  // from middleware before routing — which makes it useless as evidence about
+  // whether a path exists. Space them out so each status means something.
   for (const path of candidates) {
+    await new Promise((wait) => setTimeout(wait, 700));
     try {
       const res = await fetch(base + path, {
         headers: {
