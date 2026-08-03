@@ -7,9 +7,14 @@
  *
  * Deliberately few events, chosen so each one answers a question:
  *
- *   read:<section>   the section that held attention longest, one per visit
- *   depth:<n>        the furthest point reached, in quarters
- *   click:<thing>    the links that represent intent — the CV, the projects
+ *   read:<section>     the section that held attention longest, one per visit
+ *   reached:<section>  the furthest section reached before the visit ended
+ *   depth:<n>          the furthest point reached, in quarters
+ *   click:<thing>      the links that represent intent — email, CV, projects
+ *
+ * `read` and `reached` answer different questions and both are needed. `read`
+ * says what worked. `reached` says where people stopped, which is the only way
+ * to tell a section nobody likes from a section nobody ever sees.
  *
  * One event per visit for the first two, rather than a stream: at this traffic
  * a stream would be noise, and a single "what did they come away with" signal
@@ -29,8 +34,12 @@ declare global {
   }
 }
 
-/** Sections small enough to be noise, or that aren't content. */
-const IGNORED = new Set(['top', 'main']);
+/**
+ * The hero is deliberately included: someone who never scrolls past the first
+ * screen is the single most important thing to be able to see, and excluding
+ * it made that visit produce no events at all.
+ */
+const IGNORED = new Set(['main']);
 
 /**
  * Sends one event. Every provider here is cookieless; if none is configured,
@@ -70,6 +79,10 @@ export function initEngagement() {
     since.delete(id);
   };
 
+  /** DOM order, so "furthest reached" is a comparison of indexes. */
+  const order = new Map(sections.map((section, i) => [section.id, i]));
+  let furthest = -1;
+
   const observer = new IntersectionObserver(
     (entries) => {
       const now = performance.now();
@@ -77,6 +90,7 @@ export function initEngagement() {
         const id = (entry.target as HTMLElement).id;
         if (entry.isIntersecting) {
           if (!since.has(id)) since.set(id, now);
+          furthest = Math.max(furthest, order.get(id) ?? -1);
         } else {
           stop(id, now);
         }
@@ -119,11 +133,19 @@ export function initEngagement() {
     for (const id of [...since.keys()]) stop(id, now);
 
     const ranked = [...dwell.entries()].sort((a, b) => b[1] - a[1]);
-    // Under two seconds is scrolling past, not reading.
-    const [top, ms] = ranked[0] ?? [];
-    if (top && ms >= 2000) send(`read:${top}`, `Read longest: ${top}`);
+    // Under a second and a half is scrolling past, not reading. Kept low
+    // because smooth scrolling spends a chunk of any short visit in motion.
+    const [best, ms] = ranked[0] ?? [];
+    if (best && ms >= 1500) send(`read:${best}`, `Read longest: ${best}`);
 
     if (deepest > 0) send(`depth:${deepest}`, `Scrolled to ${deepest}%`);
+
+    // Where the visit ended. A section that never appears here is one nobody
+    // is getting to, which is a different problem from one nobody likes.
+    if (furthest >= 0) {
+      const id = sections[furthest].id;
+      send(`reached:${id}`, `Got as far as ${id}`);
+    }
   };
 
   document.addEventListener('visibilitychange', () => {
@@ -138,6 +160,9 @@ export function initEngagement() {
 
     const href = link.getAttribute('href') ?? '';
     if (href.endsWith('.pdf')) return send('click:cv-pdf', 'Downloaded the CV');
+    // The most important click on the page, and the easiest to miss: it is
+    // neither an http link nor a file.
+    if (href.startsWith('mailto:')) return send('click:email', 'Started an email');
 
     if (!href.startsWith('http')) return;
     try {
