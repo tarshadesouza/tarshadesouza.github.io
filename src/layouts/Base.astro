@@ -127,11 +127,17 @@ const personSchema = {
         data-cf-beacon={`{"token": "${analytics.id}"}`}
       />
     )}
-    {analytics.provider === 'goatcounter' && analytics.id && (
+    {/*
+      GoatCounter, loaded whenever an events code is set — independently of the
+      provider above, so it can run alongside Cloudflare rather than replacing
+      it. It counts its own page views too, which gives the engagement events a
+      denominator inside the same system.
+    */}
+    {analytics.events && (
       <script
         is:inline
         defer
-        data-goatcounter={`https://${analytics.id}.goatcounter.com/count`}
+        data-goatcounter={`https://${analytics.events}.goatcounter.com/count`}
         src="https://gc.zgo.at/count.js"
       />
     )}

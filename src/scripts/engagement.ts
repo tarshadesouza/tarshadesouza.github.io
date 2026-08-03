@@ -42,21 +42,45 @@ declare global {
 const IGNORED = new Set(['main']);
 
 /**
- * Sends one event. Every provider here is cookieless; if none is configured,
- * this is a no-op and the rest of the file still runs harmlessly.
+ * Queued rather than sent directly: GoatCounter's script is loaded with
+ * `defer`, so an early click can happen before `window.goatcounter` exists.
+ * Dropping it would lose exactly the events most worth having — someone who
+ * arrives and immediately clicks the email.
+ */
+const pending: Array<[string, string]> = [];
+let flushTimer: ReturnType<typeof setInterval> | undefined;
+
+function flush() {
+  if (typeof window.goatcounter?.count !== 'function') return;
+  while (pending.length) {
+    const [path, title] = pending.shift()!;
+    window.goatcounter.count({ path, title, event: true });
+  }
+  if (flushTimer) {
+    clearInterval(flushTimer);
+    flushTimer = undefined;
+  }
+}
+
+/**
+ * Sends one event, if somewhere has been configured to receive it. Both
+ * providers here are cookieless; with neither set this is a no-op and the rest
+ * of the file still runs harmlessly.
  */
 function send(name: string, label: string) {
-  switch (analytics.provider) {
-    case 'goatcounter':
-      window.goatcounter?.count({ path: name, title: label, event: true });
-      break;
-    case 'plausible':
-      window.plausible?.(name);
-      break;
-    default:
-      // Cloudflare Web Analytics has no custom-event API. Nothing to send to.
-      break;
+  if (analytics.provider === 'plausible') {
+    window.plausible?.(name);
+    return;
   }
+  // Cloudflare Web Analytics has no custom-event API, so events go to
+  // GoatCounter whenever a site code is set — regardless of which provider is
+  // counting page views.
+  if (!analytics.events) return;
+
+  pending.push([name, label]);
+  flush();
+  // Still not loaded: keep trying briefly rather than losing the event.
+  if (pending.length && !flushTimer) flushTimer = setInterval(flush, 300);
 }
 
 export function initEngagement() {

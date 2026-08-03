@@ -96,6 +96,19 @@ export const analytics = {
    * the built HTML publishes it either way.
    */
   id: '4b39c4bf227148f1a7bd6759cd35583a',
+  /**
+   * Optional, and independent of `provider` above.
+   *
+   * Cloudflare Web Analytics has no custom-event API, so it can count arrivals
+   * but can't say which section held someone's attention or whether they
+   * clicked the email. GoatCounter can, and runs alongside rather than
+   * instead — switching wholesale would throw away the visitor history and
+   * the half of the weekly report that already works.
+   *
+   * The site code: the subdomain of <code>.goatcounter.com. Not a secret; it
+   * ships in the HTML like any analytics identifier.
+   */
+  events: 'tarshaprofile' as string | null,
 };
 
 /**

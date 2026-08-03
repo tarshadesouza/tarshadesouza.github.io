@@ -80,6 +80,10 @@ const BEACON_TOKEN = profileSource.match(/id:\s*'([0-9a-f]{32})'/)?.[1] ?? null;
  */
 const REPORT_TO = env('REPORT_TO', profileSource.match(/email:\s*'([^']+)'/)?.[1]);
 
+/** GoatCounter site code, read from the same place the site reads it. */
+const GOATCOUNTER_SITE = profileSource.match(/events:\s*'([^']+)'/)?.[1] ?? null;
+const GOATCOUNTER_API_TOKEN = env('GOATCOUNTER_API_TOKEN');
+
 /* ── Dates ───────────────────────────────────────────────────────────────── */
 
 const DAY = 86_400_000;
@@ -415,6 +419,69 @@ async function collectCloudflare() {
   }
 }
 
+/* ── Attention (GoatCounter events) ──────────────────────────────────────── */
+
+/**
+ * Cloudflare counts arrivals. These are the events the site sends about what
+ * happened next — which section held attention, how far people got, and the
+ * clicks that mean intent. See src/scripts/engagement.ts.
+ *
+ * Grouped by the prefix each event name carries, so a new event type appears
+ * in the right block without changing anything here.
+ */
+async function collectAttention() {
+  if (!GOATCOUNTER_SITE) return null;
+  if (!GOATCOUNTER_API_TOKEN) {
+    problems.push('Attention skipped — GOATCOUNTER_API_TOKEN not set');
+    return null;
+  }
+
+  const url = new URL(`https://${GOATCOUNTER_SITE}.goatcounter.com/api/v0/stats/hits`);
+  url.searchParams.set('start', iso(period.start));
+  url.searchParams.set('end', iso(period.end));
+  url.searchParams.set('limit', '100');
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        authorization: `Bearer ${GOATCOUNTER_API_TOKEN}`,
+        'content-type': 'application/json',
+      },
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status}${body ? ` — ${body.slice(0, 120)}` : ''}`);
+    }
+
+    const rows = (await res.json()).hits ?? [];
+    const groups = { read: [], reached: [], click: [], depth: [] };
+    let pageViews = 0;
+
+    for (const row of rows) {
+      const name = row.path ?? row.name ?? '';
+      const count = row.count ?? row.count_unique ?? 0;
+      const [prefix, ...rest] = name.split(':');
+      if (prefix in groups && rest.length) groups[prefix].push({ label: rest.join(':'), value: count });
+      else pageViews += count;
+    }
+
+    const sort = (list) => list.sort((a, b) => b.value - a.value);
+    Object.values(groups).forEach(sort);
+
+    if (!Object.values(groups).some((g) => g.length)) {
+      // Configured, reachable, but nothing recorded yet — worth saying so
+      // rather than silently dropping the section.
+      problems.push('No attention events yet — they start arriving after the next deploy');
+      return null;
+    }
+
+    return { ...groups, pageViews };
+  } catch (error) {
+    problems.push(`Attention unavailable: ${error.message}`);
+    return null;
+  }
+}
+
 /* ── Google Search Console ───────────────────────────────────────────────── */
 
 /** Service-account JWT → access token, signed with node's crypto. No deps. */
@@ -618,7 +685,7 @@ const country = (code) => {
   }
 };
 
-function renderText(cloudflare, search) {
+function renderText(cloudflare, search, attention) {
   const out = [`Weekly report · ${period.label}`, '='.repeat(46), ''];
 
   if (cloudflare) {
@@ -690,6 +757,23 @@ function renderText(cloudflare, search) {
     }
   }
 
+  if (attention) {
+    out.push('ATTENTION (what they actually read)');
+    const block = (title, rows, suffix = '') => {
+      if (!rows.length) return;
+      const max = Math.max(...rows.map((r) => r.value));
+      out.push(`  ${title}`);
+      for (const row of rows.slice(0, 8)) {
+        out.push(`    ${String(row.value).padStart(4)}  ${bar(row.value, max).padEnd(19)} ${row.label}${suffix}`);
+      }
+      out.push('');
+    };
+    block('Held attention longest', attention.read);
+    block('Got as far as', attention.reached);
+    block('Scrolled to', attention.depth, '%');
+    block('Clicked', attention.click);
+  }
+
   const notes = takeaways(cloudflare, search);
   if (notes.length) {
     out.push('WHAT IT SAYS');
@@ -713,7 +797,7 @@ function renderText(cloudflare, search) {
   return out.map((line) => line.trimEnd()).join('\n');
 }
 
-function renderHtml(cloudflare, search) {
+function renderHtml(cloudflare, search, attention) {
   const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
   /**
    * Every colour in the email, in one place.
@@ -867,6 +951,18 @@ function renderHtml(cloudflare, search) {
       html += `<h2 style="${css.h2}">On what</h2>`;
       html += table(['device', 'clicks', 'seen'], devices.map((r) => [r.keys[0], r.clicks, r.impressions]));
     }
+  }
+
+  if (attention) {
+    const block = (title, rows, suffix = '') => {
+      if (!rows.length) return;
+      html += `<h2 style="${css.h2}">${esc(title)}</h2>`;
+      html += table(['', 'visits'], rows.slice(0, 8).map((r) => [r.label + suffix, r.value]));
+    };
+    block('Held attention longest', attention.read);
+    block('Got as far as', attention.reached);
+    block('Scrolled to', attention.depth, '%');
+    block('Clicked', attention.click);
   }
 
   const notes = takeaways(cloudflare, search);
@@ -1057,10 +1153,14 @@ if (process.argv.includes('--introspect')) {
 
 /* ── Run ─────────────────────────────────────────────────────────────────── */
 
-const [cloudflare, search] = await Promise.all([collectCloudflare(), collectSearch()]);
+const [cloudflare, search, attention] = await Promise.all([
+  collectCloudflare(),
+  collectSearch(),
+  collectAttention(),
+]);
 
-const text = renderText(cloudflare, search);
-const html = renderHtml(cloudflare, search);
+const text = renderText(cloudflare, search, attention);
+const html = renderHtml(cloudflare, search, attention);
 const subject = cloudflare
   ? `Your week: ${cloudflare.current.visits} visits${search ? `, ${search.totals.clicks} from search` : ''}`
   : 'Your weekly site report';
