@@ -274,18 +274,7 @@ async function cloudflareTotals(start, end, extra = '') {
  * Each breakdown is its own request. If Cloudflare renames a dimension, one
  * table goes missing and says so, instead of the whole report failing.
  */
-/**
- * Cloudflare flags automated traffic, and on a site this quiet the crawlers
- * are a large share of the total. The flag comes back as a string; anything
- * unrecognised is passed through rather than guessed at.
- */
-const botLabel = (value) =>
-  ({ '0': 'People', '1': 'Bots and crawlers', false: 'People', true: 'Bots and crawlers' })[
-    String(value)
-  ] ?? `Unknown (${value})`;
-
 const BREAKDOWNS = [
-  { key: 'bot', title: 'People or crawlers', format: botLabel },
   { key: 'countryName', title: 'Where they were', format: (v) => country(v) },
   { key: 'refererHost', title: 'How they got here' },
   { key: 'refererPath', title: 'Which page linked here' },
@@ -693,8 +682,10 @@ function renderText(cloudflare, search, attention) {
     out.push('VISITORS (Cloudflare)');
     out.push(`  ${current.visits} visits ${prior ? pct(current.visits, prior.visits) : ''}`);
     out.push(`  ${current.pageViews} page views ${prior ? pct(current.pageViews, prior.pageViews) : ''}`);
-    if (human) {
-      out.push(`  ${human.visits} of those were people; the rest were crawlers`);
+    // Only worth a line when it differs: Cloudflare's beacon needs JavaScript,
+    // so most crawlers never register and the two numbers are usually equal.
+    if (human && human.visits < current.visits) {
+      out.push(`  ${human.visits} of those were people; ${current.visits - human.visits} were crawlers`);
     }
     out.push('');
 
@@ -915,7 +906,9 @@ function renderHtml(cloudflare, search, attention) {
     html += `<h2 style="${css.h2}">Visitors</h2>
       <p style="${css.big}">${current.visits}<span style="${css.delta}">${prior ? esc(pct(current.visits, prior.visits)) : ''}</span></p>
       <p style="${css.label}">visits · ${current.pageViews} page views ${prior ? esc(pct(current.pageViews, prior.pageViews)) : ''}${
-        human ? ` · <strong style="color:${c.strong}">${human.visits}</strong> of them people` : ''
+        human && human.visits < current.visits
+          ? ` · <strong style="color:${c.strong}">${human.visits}</strong> of them people`
+          : ''
       }</p>`;
 
     if (series) html += chart(series);
