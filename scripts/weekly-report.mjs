@@ -1118,6 +1118,49 @@ async function introspect() {
   }
 }
 
+/**
+ * GoatCounter's API is small but its paths have moved between versions, and a
+ * wrong one returns a plain 404 that says nothing about what would have
+ * worked. Ask it directly rather than guessing twice.
+ */
+async function probeGoatCounter() {
+  if (!GOATCOUNTER_SITE) return;
+  console.log(`\n\nGoatCounter (${GOATCOUNTER_SITE})\n` + '='.repeat(46));
+
+  if (!GOATCOUNTER_API_TOKEN) {
+    console.log('  GOATCOUNTER_API_TOKEN is not set — nothing to probe with');
+    return;
+  }
+
+  const base = `https://${GOATCOUNTER_SITE}.goatcounter.com`;
+  const range = `start=${iso(period.start)}&end=${iso(period.end)}`;
+  const candidates = [
+    '/api/v0/me',
+    '/api/v0/sites',
+    '/api/v0/paths?limit=5',
+    `/api/v0/stats/total?${range}`,
+    `/api/v0/stats/hits?${range}&limit=5`,
+    `/api/v0/stats/toprefs?${range}&limit=5`,
+    `/api/v0/export`,
+  ];
+
+  for (const path of candidates) {
+    try {
+      const res = await fetch(base + path, {
+        headers: {
+          authorization: `Bearer ${GOATCOUNTER_API_TOKEN}`,
+          'content-type': 'application/json',
+        },
+      });
+      const body = (await res.text()).replace(/\s+/g, ' ').slice(0, 220);
+      console.log(`  ${String(res.status).padEnd(4)} ${path}`);
+      if (res.ok) console.log(`       ${body}`);
+    } catch (error) {
+      console.log(`  ERR  ${path} — ${error.message}`);
+    }
+  }
+}
+
 /** Introspection needs the raw data envelope, not viewer.accounts[0]. */
 async function cloudflareQueryRaw(query) {
   const res = await fetch('https://api.cloudflare.com/client/v4/graphql', {
@@ -1144,6 +1187,10 @@ if (process.argv.includes('--introspect')) {
     console.error(`introspection failed: ${error.message}`);
     if (!DRY_RUN) process.exit(1);
   }
+
+  await probeGoatCounter().catch((error) => {
+    console.error(`GoatCounter probe failed: ${error.message}`);
+  });
 
   // Tick dry run as well and the report follows, so a single run answers both
   // "what does the schema offer" and "does the query we send actually work".
