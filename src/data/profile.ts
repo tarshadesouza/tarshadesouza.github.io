@@ -353,6 +353,7 @@ export const experience = [
           {
             text: 'Created Xray, an internal debugging tool for design-system components.',
             tags: ['Swift', 'iOS', 'Developer Tooling'],
+            media: 'bex-xray',
           },
         ],
       },

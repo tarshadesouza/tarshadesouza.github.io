@@ -8,8 +8,8 @@ import Section from './Section.astro';
 import Stack from './Stack.astro';
 import Todo from './Todo.astro';
 import InternalWork from './InternalWork.astro';
-import { projects, projectsIntro } from '../data/profile';
-import { github, isTodo, relativeTime, stackFor } from '../lib/content';
+import { projects, projectsIntro, intro } from '../data/profile';
+import { github, isTodo, relativeTime, stackFor, inlineLinks } from '../lib/content';
 
 const entries = projects
   .map((project) => {
@@ -32,13 +32,21 @@ const entries = projects
 
 <Section
   id="work"
-  index="02 / Work"
+  index="01 / Work"
   title="Projects"
   note="Built at work and in the open. Stars, licence and stack read themselves off the repositories."
 >
   {projectsIntro && <p class="lede" data-reveal>{projectsIntro}</p>}
 
   <InternalWork />
+
+  <div class="project-context" data-reveal>
+    {inlineLinks(intro[1]).map((part) =>
+      typeof part === 'string' ? part : (
+        <a href={part.href} target="_blank" rel="noopener">{part.label}</a>
+      ),
+    )}
+  </div>
 
   <div class="cards" data-stagger="110">
     {entries.map(({ data, blurb, stack, links }) => (
@@ -88,6 +96,20 @@ const entries = projects
     max-width: 54ch;
     line-height: 1.5;
     margin-bottom: 2.5rem;
+  }
+
+  .project-context {
+    color: var(--fg-muted);
+    max-width: 62ch;
+    margin: 0 0 2.5rem;
+    font-size: var(--step-0);
+  }
+
+  .project-context a {
+    color: var(--fg);
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 0.2em;
   }
 
   .card-links {

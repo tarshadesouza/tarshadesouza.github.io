@@ -16,20 +16,20 @@
   color-scheme: dark;
 
   /* Canvas ---------------------------------------------------------------- */
-  --bg: #08090c;
-  --bg-raised: #0e1015;
-  --bg-sunken: #050609;
+  --bg: #211d1a;
+  --bg-raised: #292420;
+  --bg-sunken: #191613;
   --hairline: color-mix(in oklab, var(--fg) 10%, transparent);
   --hairline-strong: color-mix(in oklab, var(--fg) 18%, transparent);
 
   /* Ink ------------------------------------------------------------------- */
-  --fg: #e9eaef;
-  --fg-muted: #9aa0b0;
-  --fg-faint: #6b7183;
+  --fg: #f2e9dc;
+  --fg-muted: #c2b4a3;
+  --fg-faint: #ab9b89;
 
   /* Signal ---------------------------------------------------------------- */
-  --accent: #3fcfc7;
-  --accent-ink: #9fe8e3;
+  --accent: #d88963;
+  --accent-ink: #e7a17b;
   --accent-soft: color-mix(in oklab, var(--accent) 16%, transparent);
   --accent-glow: color-mix(in oklab, var(--accent) 40%, transparent);
 
@@ -59,19 +59,19 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --dur: 0.7s;
-  --radius: 14px;
+  --radius: 2px;
 }
 
 :root[data-theme='light'] {
   color-scheme: light;
-  --bg: #faf8f6;
-  --bg-raised: #fffefd;
-  --bg-sunken: #f2efec;
-  --fg: #14151a;
-  --fg-muted: #5b6070;
-  --fg-faint: #8b90a0;
-  --accent: #0f7a74;
-  --accent-ink: #0a5a55;
+  --bg: #f4efe7;
+  --bg-raised: #faf7f1;
+  --bg-sunken: #ebe4d9;
+  --fg: #29231e;
+  --fg-muted: #62584e;
+  --fg-faint: #74675b;
+  --accent: #a7482b;
+  --accent-ink: #853d27;
 }
 
 /* ============================================================================
@@ -320,7 +320,7 @@ p {
   align-items: center;
   justify-content: space-between;
   gap: 2rem;
-  width: 100%;
+  width: min(100% - var(--gutter) * 2, 78rem);
 }
 
 .nav-mark {
@@ -423,53 +423,20 @@ p {
 
 .hero {
   position: relative;
-  min-height: min(100svh, 62rem);
   display: flex;
   align-items: center;
   padding-top: var(--nav-h);
   overflow: clip;
 }
 
-.hero-glow {
-  position: absolute;
-  z-index: -1;
-  width: min(90vw, 60rem);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at center,
-    var(--accent-glow),
-    transparent 62%
-  );
-  opacity: 0.5;
-  filter: blur(30px);
-  top: -18%;
-  right: -12%;
-  animation: drift 22s var(--ease-in-out) infinite alternate;
+.hero-layout {
+  padding-block: clamp(3rem, 8vh, 6.5rem) clamp(4rem, 10vh, 8rem) !important;
 }
 
-:root[data-theme='light'] .hero-glow {
-  opacity: 0.35;
-}
+.hero-intro { padding-block: 1rem; }
 
-@keyframes drift {
-  from {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  to {
-    transform: translate3d(-6%, 5%, 0) scale(1.12);
-  }
-}
-
-.hero-grid {
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-  background-image: linear-gradient(var(--hairline) 1px, transparent 1px),
-    linear-gradient(90deg, var(--hairline) 1px, transparent 1px);
-  background-size: 5rem 5rem;
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 20%, transparent 75%);
-  opacity: 0.5;
+@media (min-width: 68rem) {
+  .hero-name { font-size: clamp(5.4rem, 9vw, 8.5rem); }
 }
 
 .hero-name {
@@ -641,17 +608,13 @@ p {
 
 .card {
   position: relative;
-  padding: clamp(1.5rem, 3vw, 2.25rem);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: linear-gradient(
-    150deg,
-    var(--bg-raised),
-    color-mix(in oklab, var(--bg-raised) 60%, var(--bg))
-  );
-  overflow: hidden;
-  transition: border-color 0.45s var(--ease-out),
-    transform 0.45s var(--ease-out);
+  padding: clamp(1.5rem, 3vw, 2.25rem) 0;
+  border: 0;
+  border-top: 1px solid var(--hairline-strong);
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+  transition: color 0.3s var(--ease-out);
 }
 
 .card::before {
@@ -669,8 +632,7 @@ p {
 }
 
 .card:hover {
-  border-color: var(--hairline-strong);
-  transform: translateY(-3px);
+  color: var(--accent);
 }
 
 .card:hover::before {
@@ -707,6 +669,10 @@ p {
   max-width: 58ch;
 }
 
+.card-blurb,
+.card-meta,
+.card-stack { position: relative; }
+
 .card-meta {
   display: flex;
   flex-wrap: wrap;
@@ -728,12 +694,16 @@ p {
 .card-stack {
   margin-top: 1.5rem;
   padding-top: 1.25rem;
-  border-top: 1px solid var(--hairline);
+  border-top: 0;
 }
 
 .cards {
   display: grid;
-  gap: 1.25rem;
+  gap: 0;
+}
+
+.cards .card:last-child {
+  border-bottom: 1px solid var(--hairline-strong);
 }
 
 /* Now list ---------------------------------------------------------------- */

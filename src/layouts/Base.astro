@@ -79,7 +79,7 @@ const personSchema = {
 ---
 
 <!doctype html>
-<html lang="en" class="no-js" data-theme="dark">
+<html lang="en" class="no-js" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -147,11 +147,10 @@ const personSchema = {
 
     {/*
       Set the theme before first paint so there is no flash of the wrong one.
-      Dark is the brand default regardless of the OS setting; light is a
-      deliberate choice the visitor makes with the toggle, and it sticks.
+      Light is the default; the visitor can switch to dark, and it sticks.
     */}
     <script is:inline>
-      document.documentElement.dataset.theme = localStorage.getItem('theme') ?? 'dark';
+      try { document.documentElement.dataset.theme = localStorage.getItem('theme') ?? 'light'; } catch {}
     </script>
   </head>
 

@@ -454,10 +454,11 @@ function initCV() {
 
 function initTheme() {
   const toggle = document.querySelector<HTMLButtonElement>('.theme-toggle');
+  toggle?.setAttribute('aria-label', `Switch to ${document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'} theme`);
   toggle?.addEventListener('click', () => {
     const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
     document.documentElement.dataset.theme = next;
-    localStorage.setItem('theme', next);
+    try { localStorage.setItem('theme', next); } catch {}
     toggle.setAttribute('aria-label', `Switch to ${next === 'light' ? 'dark' : 'light'} theme`);
   });
 }

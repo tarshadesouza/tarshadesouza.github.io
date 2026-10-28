@@ -1,1 +1,76 @@
-[]
+[
+  {
+    "title": "I built an agent to monitor my CI",
+    "url": "https://theunanimouscoder.medium.com/i-built-an-agent-to-monitor-my-ci-9dc009b69e6b",
+    "publishedAt": "2026-07-20T14:46:54.000Z",
+    "excerpt": "and yes, it’s replacing a big chunk of my job. On a finance podcast recently, the host said something that stuck with me: “List five things in your day-to-day job and automate them.” As a so…",
+    "tags": [
+      "continuos-integration",
+      "devops",
+      "developer-tools",
+      "ai-agent"
+    ],
+    "readingMinutes": 3
+  },
+  {
+    "title": "My month and a half AI detox",
+    "url": "https://theunanimouscoder.medium.com/my-month-and-a-half-ai-detox-db4ae4d9ed0a",
+    "publishedAt": "2026-07-13T09:25:13.000Z",
+    "excerpt": "It was harder than I thought. The tipping point for me was asking chatGPT what corn starch I should buy whilst I was at the supermarket, I had a poor connection and I just stood in the aisle…",
+    "tags": [
+      "ai"
+    ],
+    "readingMinutes": 2
+  },
+  {
+    "title": "After Years as a Software Engineer, Here’s How I’d Break Into Tech in 2026",
+    "url": "https://theunanimouscoder.medium.com/after-years-as-a-software-engineer-heres-how-i-d-break-into-tech-in-2026-e106ab818613",
+    "publishedAt": "2026-06-01T17:13:03.000Z",
+    "excerpt": "Here’s my controversial opinion about software engineering jobs in today’s market: The days of signing up for a bootcamp and landing a job a few months later are largely gone. First of all,…",
+    "tags": [
+      "tech-industry",
+      "technology",
+      "job-interview",
+      "software-engineering"
+    ],
+    "readingMinutes": 4
+  },
+  {
+    "title": "You Can Hack Netflix, But Is It Worth the $187 Price Tag?",
+    "url": "https://theunanimouscoder.medium.com/you-can-hack-netflix-but-is-it-worth-the-187-price-tag-7719b0c22f55",
+    "publishedAt": "2024-06-12T14:34:01.000Z",
+    "excerpt": "Why I’m Finally Telling You to Stop Sharing Netflix Accounts and Pay Up. I can attest to being a part of the problem of password sharing, but can’t we all? So, when I turned on my TV to watc…",
+    "tags": [
+      "rasberry-pi",
+      "hacking",
+      "netflix",
+      "netflix-password-sharing"
+    ],
+    "readingMinutes": 6
+  },
+  {
+    "title": "The Viral Cryptocurrency (And its not Doge Coin)",
+    "url": "https://theunanimouscoder.medium.com/the-viral-cryptocurrency-and-its-not-doge-coin-60e28ea393f0",
+    "publishedAt": "2021-04-19T12:10:10.000Z",
+    "excerpt": "# SAFEMOON is trending on twitter 3 days in a row Recently Doge Coin surged this week with an almost 600% gain with a cheeky Elon Musk laughing behind the wheel of his hybrid car/spaceship.…",
+    "tags": [
+      "cryptocurrency",
+      "decentralization",
+      "viral",
+      "cryptocurrency-news"
+    ],
+    "readingMinutes": 3
+  },
+  {
+    "title": "My Failed Attempt At Becoming A NFT Artist",
+    "url": "https://theunanimouscoder.medium.com/my-failed-attempt-at-becoming-a-nft-artist-986b21c6c5ef",
+    "publishedAt": "2021-04-15T12:51:45.000Z",
+    "excerpt": "Warning: Its not all unicorns and bitcoins Into the rabbit hole: a brief tale I like many jumped on the NFT ship a couple of months ago, and this is a brief story of my somewhat miserable cr…",
+    "tags": [
+      "nft",
+      "tech",
+      "cryptocurrency"
+    ],
+    "readingMinutes": 4
+  }
+]

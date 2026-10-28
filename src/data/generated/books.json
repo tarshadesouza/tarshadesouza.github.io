@@ -1,1 +1,18 @@
-{}
+{
+  "1984": "/books/1984.webp",
+  "a-walk-in-the-woods": "/books/a-walk-in-the-woods.webp",
+  "algorithms-to-live-by": "/books/algorithms-to-live-by.webp",
+  "all-creatures-great-and-small": "/books/all-creatures-great-and-small.webp",
+  "atomic-habits": "/books/atomic-habits.webp",
+  "auntie-mame": "/books/auntie-mame.webp",
+  "brief-answers-to-the-big-questions": "/books/brief-answers-to-the-big-questions.webp",
+  "calypso": "/books/calypso.webp",
+  "contagious": "/books/contagious.webp",
+  "flow": "/books/flow.webp",
+  "heartburn": "/books/heartburn.webp",
+  "lean-in": "/books/lean-in.webp",
+  "my-family-and-other-animals": "/books/my-family-and-other-animals.webp",
+  "outliers": "/books/outliers.webp",
+  "the-picture-of-dorian-gray": "/books/the-picture-of-dorian-gray.webp",
+  "the-pragmatic-programmer": "/books/the-pragmatic-programmer.webp"
+}
